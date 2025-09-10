@@ -146,11 +146,12 @@
 
 /* Process State Info */
 .state-info {
-  background-color: #f8fafc;
+  background-color: #dfe4e8;
   padding: 16px;
   border-radius: 6px;
   margin-bottom: 16px;
   border: 1px solid #e2e8f0;
+  color: green;
 }
 
 .state-title {
@@ -470,7 +471,7 @@
   gap: 0.5rem;
   font-size: 0.9rem;
   color: #333;
-  margin: 0;  /* remove float spacing */
+  margin: 10px;  /* remove float spacing */
 }
 
 .paiements-status-inline .status-dot {
