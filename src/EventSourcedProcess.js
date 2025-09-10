@@ -1,0 +1,299 @@
+import React, { useState } from 'react';
+import { Play, RotateCcw } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import './EventSourcedProcess.css';
+
+const EventSourcedProcess = () => {
+  const [events, setEvents] = useState([]);
+  const [currentState, setCurrentState] = useState({
+    step1: 'ToDo',
+    step2: 'ToDo',
+    step3: 'ToDo',
+    step4: 'ToDo',
+    step5: 'ToDo',
+    step6: 'ToDo',
+    changeId: null,
+  });
+  const [isRunning, setIsRunning] = useState(false);
+  const [processCompleted, setProcessCompleted] = useState(false);
+
+  // Paiements status
+  const [paiementStatus, setPaiementStatus] = useState({
+    color: 'green',
+    label: 'En cours',
+    id: uuidv4(), // initial UUID
+  });
+
+  const processSteps = [
+    { id: 1, name: 'Créer la mutation', duration: 1000, optional: false },
+    { id: 2, name: 'Suspendre les paiements', duration: 1200, optional: false },
+    { id: 3, name: 'Mettre à jour la fin de droit (si changements début/fin)', duration: 1500, optional: true },
+    { id: 4, name: 'Mettre à jour le plan de calcul (si changements ressources)', duration: 1500, optional: true },
+    { id: 5, name: 'Reconcilier les paiements avec le droit', duration: 800, optional: false },
+    { id: 6, name: 'Valider la décision de fin de droit', duration: 800, optional: false },
+  ];
+
+  const addEvent = (type, stepId, data = {}) => {
+    const event = {
+      id: Date.now() + Math.random(),
+      timestamp: new Date().toISOString(),
+      type,
+      stepId,
+      changeId: currentState.changeId,
+      data,
+      sequenceNumber: events.length + 1,
+    };
+    setEvents(prev => [event, ...prev]); // newest on top
+    return event;
+  };
+
+  const startProcess = () => {
+    if (currentState.changeId && !processCompleted) return; // block if process running
+
+    const newChangeId = uuidv4();
+    setCurrentState({
+      step1: 'ToDo',
+      step2: 'ToDo',
+      step3: 'ToDo',
+      step4: 'ToDo',
+      step5: 'ToDo',
+      step6: 'ToDo',
+      changeId: newChangeId,
+    });
+    setProcessCompleted(false);
+
+    // Fire start event
+    addEvent('OperationMutationDémarrée', 1, { message: 'Process started' });
+
+    // Immediately run step 1
+    runStep(1, newChangeId);
+  };
+
+  const runStep = (stepId, forcedChangeId = null) => {
+    const key = `step${stepId}`;
+    if (isRunning || currentState[key] !== 'ToDo') return;
+
+    setIsRunning(true);
+    const step = processSteps[stepId - 1];
+    addEvent('STEP_STARTED', stepId);
+
+    setTimeout(() => {
+      setCurrentState(prev => ({
+        ...prev,
+        [key]: 'Done',
+        changeId: forcedChangeId || prev.changeId,
+      }));
+      addEvent('STEP_COMPLETED', stepId);
+
+      // Step 2 → Paiements suspended
+      if (stepId === 2) {
+        setPaiementStatus(prev => ({ ...prev, color: 'red', label: 'En attente' }));
+        addEvent('PAIEMENT_STATUS_CHANGED', stepId, { status: 'En attente' });
+      }
+
+      // Step 6 → Paiements back to green with new UUID
+      if (stepId === 6) {
+        const newPaiementId = uuidv4();
+        setPaiementStatus({ color: 'green', label: 'En cours', id: newPaiementId });
+        addEvent('PAIEMENT_STATUS_CHANGED', stepId, { status: 'En cours', paiementId: newPaiementId });
+        addEvent('MutationConfirmée', stepId, { message: 'Mutation confirmée' });
+        setProcessCompleted(true);
+      }
+
+      setIsRunning(false);
+    }, step.duration);
+  };
+
+  const runNextStep = () => {
+    if (!currentState.changeId || isRunning) return;
+
+    for (let i = 1; i <= processSteps.length; i++) {
+      const key = `step${i}`;
+      if (currentState[key] === 'ToDo') {
+        runStep(i);
+        break;
+      }
+    }
+  };
+
+  const skipStep = stepId => {
+    const key = `step${stepId}`;
+    if (currentState[key] !== 'ToDo') return;
+
+    setCurrentState(prev => ({ ...prev, [key]: 'Skipped' }));
+    addEvent('STEP_SKIPPED', stepId);
+  };
+
+  const cancelStep = stepId => {
+    const updates = {};
+    const stepKey = `step${stepId}`;
+
+    if (currentState[stepKey] !== 'Done' && currentState[stepKey] !== 'Skipped') return;
+    if (currentState.step6 === 'Done') {
+      alert('Cannot cancel after step 6 is completed.');
+      return;
+    }
+
+    // Cancel step 1 → reset mutation
+    if (stepId === 1) {
+      addEvent('OperationMutationAnnulée', stepId, { message: 'Operation Mutation Annulée' });
+      setCurrentState({
+        step1: 'ToDo',
+        step2: 'ToDo',
+        step3: 'ToDo',
+        step4: 'ToDo',
+        step5: 'ToDo',
+        step6: 'ToDo',
+        changeId: null,
+      });
+
+      // Reset Paiements (keep same UUID)
+      setPaiementStatus(prev => ({ ...prev, color: 'green', label: 'En cours' }));
+      addEvent('PAIEMENT_STATUS_CHANGED', stepId, { status: 'En cours' });
+
+      setProcessCompleted(false);
+      return;
+    }
+
+    // Cancel steps 2+ → revert following to ToDo
+    for (let i = stepId; i <= processSteps.length; i++) {
+      const key = `step${i}`;
+      if (currentState[key] === 'Done' || currentState[key] === 'Skipped') {
+        updates[key] = 'ToDo';
+        addEvent('STEP_CANCELLED', i);
+      }
+    }
+
+    setCurrentState(prev => ({ ...prev, ...updates }));
+  };
+
+  const resetProcess = () => {
+    setCurrentState({
+      step1: 'ToDo',
+      step2: 'ToDo',
+      step3: 'ToDo',
+      step4: 'ToDo',
+      step5: 'ToDo',
+      step6: 'ToDo',
+      changeId: null,
+    });
+    setEvents([]);
+    setIsRunning(false);
+    setProcessCompleted(false);
+
+    // Reset Paiements to green but keep initial UUID
+    setPaiementStatus(prev => ({ ...prev, color: 'green', label: 'En cours' }));
+  };
+
+  const getStatusClass = status => {
+    switch (status) {
+      case 'ToDo': return 'status-todo';
+      case 'Done': return 'status-done';
+      case 'Skipped': return 'status-skipped';
+      default: return '';
+    }
+  };
+
+  return (
+    <div className="process-container">
+      <h1 className="main-title">Event Sourced Process Simulation (ChangeId Tracking)</h1>
+
+      <div className="content-grid">
+        {/* Process Panel */}
+        <div className="panel">
+          <div className="panel-header">
+          <h2 className="panel-title">
+            Process Flow
+            {/* Paiements status inside Process Flow top-right */}
+            <span className="paiements-status-inline">
+              <span className={`status-dot ${paiementStatus.color}`}></span>
+              Paiements: {paiementStatus.label} {paiementStatus.id && `(Id: ${paiementStatus.id})`}
+            </span>
+          </h2>
+          </div>
+
+          <div className="steps-container">
+            {processSteps.map(step => (
+              <div key={step.id} className="step-row">
+                <div className={`step-indicator ${getStatusClass(currentState[`step${step.id}`])}`}>
+                  {step.id}
+                </div>
+                <div className="step-details">
+                  <div className="step-name">
+                    {step.name} {step.optional && <span className="optional-tag">(Optional)</span>}
+                  </div>
+                  <div className="step-status">Status: {currentState[`step${step.id}`]}</div>
+                </div>
+                {currentState[`step${step.id}`] === 'ToDo' && step.optional && (
+                  <button onClick={() => skipStep(step.id)} className="btn btn-warning">Skip</button>
+                )}
+                {(currentState[`step${step.id}`] === 'Done' || currentState[`step${step.id}`] === 'Skipped') &&
+                  currentState.step6 !== 'Done' && (
+                  <button onClick={() => cancelStep(step.id)} className="btn btn-danger">Cancel</button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="controls">
+            <button
+              onClick={startProcess}
+              disabled={currentState.changeId && !processCompleted}
+              className="btn btn-success"
+            >
+              Start
+            </button>
+            <button
+              onClick={runNextStep}
+              disabled={isRunning || processCompleted || !currentState.changeId}
+              className="btn btn-primary"
+            >
+              <Play size={16} />
+              <span>{isRunning ? 'Running...' : 'Run Next Step'}</span>
+            </button>
+            <button onClick={resetProcess} className="btn btn-secondary">
+              <RotateCcw size={16} />
+              <span>Reset</span>
+            </button>
+          </div>
+
+          <div className="state-info">
+            <div>Current ChangeId: {currentState.changeId || 'None'}</div>
+          </div>
+
+          {processCompleted && (
+            <div className="success-message">
+              ✅ Mutation Terminée avec Succès (Id = {currentState.changeId})
+            </div>
+          )}
+        </div>
+
+        {/* Event Stream */}
+        <div className="panel">
+          <h2 className="panel-title">Event Stream</h2>
+          <div className="event-stream">
+            {events.length === 0 ? (
+              <div className="no-events">No events yet...</div>
+            ) : (
+              events.map(event => (
+                <div key={event.id} className="event-item">
+                  <div className="event-header">
+                    #{event.sequenceNumber} {event.type}
+                  </div>
+                  <div className="event-meta">
+                    Step {event.stepId} | ChangeId {event.changeId} | {new Date(event.timestamp).toLocaleTimeString()}
+                  </div>
+                  {event.data && Object.keys(event.data).length > 0 && (
+                    <div className="event-data">{JSON.stringify(event.data)}</div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default EventSourcedProcess;
