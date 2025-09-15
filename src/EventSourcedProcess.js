@@ -48,7 +48,7 @@ const EventSourcedProcess = () => {
     { id: 2, name: 'Suspendre les paiements', duration: 1200, optional: false },
     { id: 3, name: 'Mettre à jour la fin de droit (si changements début/fin)', duration: 1500, optional: true },
     { id: 4, name: 'Mettre à jour le plan de calcul (si changements ressources)', duration: 1500, optional: true },
-    { id: 5, name: 'Reconcilier les paiements avec le droit', duration: 800, optional: false },
+    { id: 5, name: 'Reconcilier droit, prestations, paiements effectués (livre comptable)', duration: 800, optional: false },
     { id: 6, name: 'Valider la décision de fin de droit', duration: 800, optional: false },
   ];
 
@@ -65,19 +65,20 @@ const EventSourcedProcess = () => {
     localStorage.setItem(STORAGE_KEY_PAIEMENT, JSON.stringify(paiementStatus));
   }, [paiementStatus]);
 
-  const addEvent = (type, stepId, data = {}) => {
-    const event = {
-      id: Date.now() + Math.random(),
-      timestamp: new Date().toISOString(),
-      type,
-      stepId,
-      changeId: currentState.changeId,
-      data,
-      sequenceNumber: events.length + 1,
-    };
-    setEvents(prev => [event, ...prev]);
-    return event;
+  const addEvent = (type, stepId, data = {}, overrideChangeId = null) => {
+  const event = {
+    id: Date.now() + Math.random(),
+    timestamp: new Date().toISOString(),
+    type,
+    stepId,
+    changeId: overrideChangeId ?? currentState.changeId,
+    data,
+    sequenceNumber: events.length + 1,
   };
+  setEvents(prev => [...prev, event]);
+  return event;
+};
+
 
   const startProcess = () => {
     if (currentState.changeId && !processCompleted) return;
@@ -94,7 +95,7 @@ const EventSourcedProcess = () => {
     });
     setProcessCompleted(false);
 
-    addEvent('OperationMutationDémarrée', 1, { message: 'Process started' });
+    addEvent('OperationMutationDémarrée', 1, { message: 'Process started' }, newChangeId);
     runStep(1, newChangeId);
   };
 
@@ -103,7 +104,8 @@ const EventSourcedProcess = () => {
     if (isRunning || currentState[key] !== 'ToDo') return;
 
     setIsRunning(true);
-    addEvent('STEP_STARTED', stepId);
+    const eventChangeId = forcedChangeId || currentState.changeId;
+    addEvent('StepStarted', stepId, {}, eventChangeId);
 
     // Special case for Step 4 → Ouverte
     if (stepId === 4) {
@@ -123,19 +125,26 @@ const EventSourcedProcess = () => {
         [key]: 'Done',
         changeId: forcedChangeId || prev.changeId,
       }));
-      addEvent('STEP_COMPLETED', stepId);
+      addEvent('StepCompleted', stepId, {}, eventChangeId);
 
       if (stepId === 2) {
         setPaiementStatus(prev => ({ ...prev, color: 'red', label: 'En attente' }));
-        addEvent('PAIEMENT_STATUS_CHANGED', stepId, { status: 'En attente' });
+        addEvent('PaiementStatutEnAttente', stepId, { status: 'En attente' }, eventChangeId);
       }
 
       if (stepId === 6) {
         const newPaiementId = uuidv4();
         setPaiementStatus({ color: 'green', label: 'En cours', id: newPaiementId });
-        addEvent('PAIEMENT_STATUS_CHANGED', stepId, { status: 'En cours', paiementId: newPaiementId });
-        addEvent('MutationConfirmée', stepId, { message: 'Mutation confirmée' });
+        addEvent('PaiementStatutAjusté', stepId, { status: 'En cours', paiementId: newPaiementId }, eventChangeId);
+        addEvent('MutationConfirmée', stepId, { message: 'Mutation confirmée' }, eventChangeId);
+
+        // 🔹 mark process completed and clear changeId
         setProcessCompleted(true);
+        setCurrentState(prev => ({
+          ...prev,
+          changeId: null,   // clear active mutation
+          step6: 'Done'
+        }));
       }
 
       setIsRunning(false);
@@ -145,7 +154,7 @@ const EventSourcedProcess = () => {
   const validateStep4 = () => {
     if (currentState.step4 !== 'Ouverte') return;
     setCurrentState(prev => ({ ...prev, step4: 'Done' }));
-    addEvent('STEP_COMPLETED', 4);
+    addEvent('StepCompleted', 4);
   };
 
   const runNextStep = () => {
@@ -164,7 +173,7 @@ const EventSourcedProcess = () => {
     if (currentState[key] !== 'ToDo') return;
 
     setCurrentState(prev => ({ ...prev, [key]: 'Skipped' }));
-    addEvent('STEP_SKIPPED', stepId);
+    addEvent('StepSkipped', stepId);
   };
 
   const cancelStep = stepId => {
@@ -189,7 +198,7 @@ const EventSourcedProcess = () => {
         changeId: null,
       });
       setPaiementStatus(prev => ({ ...prev, color: 'green', label: 'En cours' }));
-      addEvent('PAIEMENT_STATUS_CHANGED', stepId, { status: 'En cours' });
+      addEvent('PaiementStatusEnCours', stepId, { status: 'En cours' });
       setProcessCompleted(false);
       return;
     }
@@ -198,7 +207,7 @@ const EventSourcedProcess = () => {
       const key = `step${i}`;
       if (currentState[key] === 'Done' || currentState[key] === 'Skipped') {
         updates[key] = 'ToDo';
-        addEvent('STEP_CANCELLED', i);
+        addEvent('StepCancelled', i);
       }
     }
 
@@ -223,6 +232,23 @@ const EventSourcedProcess = () => {
     localStorage.removeItem(STORAGE_KEY_STATE);
     localStorage.removeItem(STORAGE_KEY_EVENTS);
     localStorage.removeItem(STORAGE_KEY_PAIEMENT);
+  };
+
+  // 🔹 NEW: start new mutation after one completes
+  const startNewMutation = () => {
+    const newChangeId = uuidv4();
+    setCurrentState({
+      step1: 'ToDo',
+      step2: 'ToDo',
+      step3: 'ToDo',
+      step4: 'ToDo',
+      step5: 'ToDo',
+      step6: 'ToDo',
+      changeId: newChangeId,
+    });
+    setProcessCompleted(false);
+    addEvent('OperationMutationDémarrée', 1, { message: 'New mutation started' });
+    runStep(1, newChangeId);
   };
 
   const getStatusClass = status => {
@@ -268,9 +294,10 @@ const EventSourcedProcess = () => {
                   <div className="step-status">Status: {currentState[`step${step.id}`]}</div>
                 </div>
 
-                {currentState[`step${step.id}`] === 'ToDo' && step.optional && (
-                  <button onClick={() => skipStep(step.id)} className="btn btn-warning">Skip</button>
-                )}
+                {currentState[`step${step.id}`] === 'ToDo' && step.optional &&
+  (step.id === 1 || ['Done', 'Skipped'].includes(currentState[`step${step.id - 1}`])) && (
+    <button onClick={() => skipStep(step.id)} className="btn btn-warning">Skip</button>
+)}
 
                 {step.id === 4 && currentState.step4 === 'Ouverte' ? (
                   <button onClick={validateStep4} className="btn btn-primary">Valider</button>
@@ -290,12 +317,18 @@ const EventSourcedProcess = () => {
             <button onClick={resetProcess} className="btn btn-secondary">
               <RotateCcw size={16} /> <span>Reset</span>
             </button>
-          </div>
 
+            {/* 🔹 show this only when a flow has ended */}
+            {processCompleted && !currentState.changeId && (
+              <button onClick={startNewMutation} className="btn btn-success">
+                Start New Mutation
+              </button>
+            )}
+          </div>
 
           {processCompleted && (
             <div className="success-message">
-              ✅ Mutation Terminée avec Succès (Id = {currentState.changeId})
+              ✅ Mutation Terminée avec Succès
             </div>
           )}
         </div>
