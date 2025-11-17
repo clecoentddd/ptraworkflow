@@ -376,7 +376,12 @@ const EventSourcedProcess = () => {
 
 
 
-                {step.id === 4 && currentState.step4 === 'Ouverte' ? (
+                {step.id === 3 && currentState.step3 === 'Ouverte' ? (
+                  <button onClick={() => {
+                    setCurrentState(prev => ({ ...prev, step3: 'Done' }));
+                    addEvent('StepCompleted', 3, {}, currentState.changeId);
+                  }} className="btn btn-primary">Valider</button>
+                ) : step.id === 4 && currentState.step4 === 'Ouverte' ? (
                   <button onClick={validateStep4} className="btn btn-primary">Valider</button>
                 ) : (currentState[`step${step.id}`] === 'Done' || currentState[`step${step.id}`] === 'Skipped') &&
                     currentState.step6 !== 'Done' ? (

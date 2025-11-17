@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import EventStream from '../components/EventStream';
+import ProcessFlowShared from '../sharedProjections/ProcessFlowShared';
 import computeEntries from './projections/computeEntries';
 import eventLogProjection from './projections/eventLogProjection';
 import AddEntryCommand from './addEntry/AddEntryCommand';
@@ -123,39 +124,12 @@ const EventzFinanceTracker = () => {
   };
 
   return (
-    <div className="finance-tracker">
-      {/* Process Flow Card */}
-      <div className="event-stream-section" style={{marginBottom: 32}}>
-        <div className="event-stream-title">Process Flow</div>
-        {processState ? (
-          <>
-            <div className="process-flow-list" style={{marginBottom: 4}}>
-              <div className="process-flow-item" style={{fontWeight:'bold', color:'#444'}}>
-                <span style={{background:'#e0e7ef', color:'#2563eb', borderRadius:4, padding:'2px 8px', marginRight:8, fontWeight:600, fontSize:'0.98em'}}>changeId</span>
-                {processState.changeId || <span style={{color:'#aaa'}}>none</span>}
-              </div>
-            </div>
-            <div className="process-flow-list">
-              {Object.entries(processState)
-                .filter(([k]) => k !== 'changeId')
-                .map(([k, v], idx, arr) => (
-                  <div key={k} className="process-flow-item" style={{
-                    display:'flex', alignItems:'center', marginBottom: 0
-                  }}>
-                    <span style={{background:'#f3f4f6', color:'#555', borderRadius:4, padding:'2px 8px', marginRight:8, fontWeight:500, fontSize:'0.97em'}}>{k}</span>
-                    <span style={{color: v==='Ouverte' ? '#16a34a' : v==='Done' ? '#64748b' : '#b91c1c', fontWeight:600}}>{v===null?'null':v}</span>
-                    {idx < arr.length-1 && <span style={{margin:'0 8px', color:'#cbd5e1'}}>&rarr;</span>}
-                  </div>
-                ))}
-            </div>
-          </>
-        ) : (
-          <div style={{color:'#aaa'}}>No process state found.</div>
-        )}
-      </div>
+    <div className="droits-page-container" style={{ maxWidth: 1100, margin: '40px auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      {/* Process Flow (now on top, no card) */}
+      <ProcessFlowShared steps={processState ? require('../sharedProjections/processFlowProjection').default(processState) : []} />
 
       {/* Main Table/Form Card */}
-      <div className="event-stream-section" style={{marginBottom: 32}}>
+      <div className="event-stream-section" style={{marginBottom: 0}}>
         <div className="event-stream-title">Ressources - Revenus / Dépenses (EventZ)</div>
         <div className="form-row">
           <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} disabled={!isStep4Ouverte}>

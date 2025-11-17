@@ -1,0 +1,54 @@
+.process-flow-shared {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px #0002;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+}
+.process-flow-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: #1a237e;
+}
+.process-flow-steps-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.process-flow-step-horizontal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+}
+.process-flow-step-indicator {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e3e6f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+.status-todo { background: #e3e6f3; color: #3949ab; }
+.status-done { background: #43a047; color: #fff; }
+.status-skipped { background: #ffb300; color: #fff; }
+.status-ouverte { background: #1976d2; color: #fff; }
+.status-ignored { background: #bdbdbd; color: #fff; }
+.process-flow-step-label {
+  text-align: center;
+  font-size: 1.01em;
+  color: #222;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.process-flow-arrow {
+  font-size: 1.5em;
+  color: #bdbdbd;
+  margin: 0 8px;
+  user-select: none;
+}

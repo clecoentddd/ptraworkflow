@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { UpdateDroitsPeriod } from './updateDroits';
 import './DroitsPeriodPage.css';
 import computeDroitsPeriod from './projections/computeDroitsPeriod';
-import ProcessFlow from '../components/ProcessFlow';
+import ProcessFlowShared from '../sharedProjections/ProcessFlowShared';
 import EventStream from '../components/EventStream';
 import processFlowProjection from '../sharedProjections/processFlowProjection';
 import eventStreamProjection from '../sharedProjections/eventStreamProjection';
@@ -124,6 +124,8 @@ export default function DroitsPeriodPage() {
 
   return (
     <div className="droits-page-container" style={{ maxWidth: 1100, margin: '40px auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      {/* Process Flow (now on top, no card) */}
+      <ProcessFlowShared steps={processSteps} />
       {/* Modification Form Card */}
       <div className="event-stream-section" style={{marginBottom: 0}}>
         <div className="event-stream-title">Gestion de la période de droits</div>
@@ -135,11 +137,6 @@ export default function DroitsPeriodPage() {
           changeId={processState.changeId}
         />
         {error && <div className="error" style={{ color: '#d32f2f', marginTop: 8 }}>{error}</div>}
-      </div>
-      {/* Process Flow Card */}
-      <div className="event-stream-section" style={{marginBottom: 0}}>
-        <div className="event-stream-title">Processus</div>
-        <ProcessFlow steps={processSteps} />
       </div>
       {/* Event Stream Card */}
       <div className="event-stream-section">
