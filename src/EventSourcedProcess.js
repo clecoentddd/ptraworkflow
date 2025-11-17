@@ -196,6 +196,12 @@ const EventSourcedProcess = () => {
     const key = `step${stepId}`;
     if (currentState[key] !== 'ToDo') return;
 
+    // Special handling for step 3: when skipped, set step3 to Skipped and step4 to Ouverte
+    if (stepId === 3) {
+      setCurrentState(prev => ({ ...prev, step3: 'Skipped', step4: 'Ouverte' }));
+      addEvent('StepSkipped', 3);
+      return;
+    }
     setCurrentState(prev => ({ ...prev, [key]: 'Skipped' }));
     addEvent('StepSkipped', stepId);
   };
@@ -378,7 +384,7 @@ const EventSourcedProcess = () => {
 
                 {step.id === 3 && currentState.step3 === 'Ouverte' ? (
                   <button onClick={() => {
-                    setCurrentState(prev => ({ ...prev, step3: 'Done' }));
+                    setCurrentState(prev => ({ ...prev, step3: 'Done', step4: 'Ouverte' }));
                     addEvent('StepCompleted', 3, {}, currentState.changeId);
                   }} className="btn btn-primary">Valider</button>
                 ) : step.id === 4 && currentState.step4 === 'Ouverte' ? (
