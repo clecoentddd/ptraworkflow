@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
+
 import { Play, RotateCcw, Calendar } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+
 import './EventSourcedProcess.css';
+import { UpdateDroitsPeriod } from './droits/updateDroits';
+import EventStream from './components/EventStream';
 
 const STORAGE_KEY_STATE = "eventSourcedProcessState";
 const STORAGE_KEY_EVENTS = "eventSourcedProcessEvents";
@@ -118,7 +122,16 @@ const EventSourcedProcess = () => {
 
     addEvent('StepStarted', stepId, {}, eventChangeId);
 
-    // Special case for Step 4 → Ouverte (pauses actual completion until validation)
+    // Special case for Step 3 and 4 → Ouverte (pauses actual completion until validation)
+    if (stepId === 3) {
+      setCurrentState(prev => ({
+        ...prev,
+        step3: 'Ouverte',
+        changeId: eventChangeId,
+      }));
+      setIsRunning(false);
+      return;
+    }
     if (stepId === 4) {
       setCurrentState(prev => ({
         ...prev,
@@ -239,10 +252,12 @@ const EventSourcedProcess = () => {
     setIsRunning(false);
     setProcessCompleted(false);
     setPaiementStatus(prev => ({ ...prev, color: 'green', label: 'En cours' }));
-    // clear local storage
-    localStorage.removeItem(STORAGE_KEY_STATE);
-    localStorage.removeItem(STORAGE_KEY_EVENTS);
-    localStorage.removeItem(STORAGE_KEY_PAIEMENT);
+  // clear local storage
+  localStorage.removeItem(STORAGE_KEY_STATE);
+  localStorage.removeItem(STORAGE_KEY_EVENTS);
+  localStorage.removeItem(STORAGE_KEY_PAIEMENT);
+  // also clear EventZ event stream
+  localStorage.removeItem('eventzEvents');
   };
 
   // start new mutation after completion (unchanged)
@@ -359,6 +374,8 @@ const EventSourcedProcess = () => {
                     <button onClick={() => skipStep(step.id)} className="btn btn-warning">Skip</button>
                   )}
 
+
+
                 {step.id === 4 && currentState.step4 === 'Ouverte' ? (
                   <button onClick={validateStep4} className="btn btn-primary">Valider</button>
                 ) : (currentState[`step${step.id}`] === 'Done' || currentState[`step${step.id}`] === 'Skipped') &&
@@ -397,26 +414,11 @@ const EventSourcedProcess = () => {
           )}
         </div>
 
-<div className="panel">
-  <h2 className="panel-title">Event Stream</h2>
-  <div className="event-stream">
-    {events.length === 0 ? (
-      <div className="no-events">No events yet...</div>
-    ) : (
-      [...events].reverse().map(event => (
-        <div key={event.id} className="event-item">
-          <div className="event-header">#{event.sequenceNumber} {event.type}</div>
-          <div className="event-meta">
-            Step {event.stepId ?? '-'} | ChangeId {event.changeId} | {new Date(event.timestamp).toLocaleTimeString()}
-          </div>
-          {event.data && Object.keys(event.data).length > 0 && (
-            <div className="event-data">{JSON.stringify(event.data)}</div>
-          )}
-        </div>
-      ))
-    )}
-  </div>
-</div>
+
+      <div className="event-stream-section">
+        <div className="event-stream-title">Event Stream</div>
+        <EventStream events={events} maxHeight={10000} />
+      </div>
 
       </div>
     </div>

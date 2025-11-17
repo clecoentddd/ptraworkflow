@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import EventSourcedProcess from './EventSourcedProcess';
-import FinanceTracker from './FinanceTracker';
+import EventzFinanceTracker from './ressources/EventzFinanceTracker';
+import DroitsPeriodPage from './droits/DroitsPeriodPage';
 import CommeGit from './CommeGit'; // ✅ new import
 import './App.css';
 
@@ -12,12 +13,14 @@ function App() {
         <nav style={{ padding: '16px', background: '#f0f0f0' }}>
           <Link to="/" style={{ marginRight: '16px' }}>Process</Link>
           <Link to="/finance" style={{ marginRight: '16px' }}>Finance Tracker</Link>
+          <Link to="/droits" style={{ marginRight: '16px' }}>Droits</Link>
           <Link to="/git">Comme Git</Link> {/* ✅ new link */}
         </nav>
 
         <Routes>
           <Route path="/" element={<EventSourcedProcess />} />
-          <Route path="/finance" element={<FinanceTracker />} />
+          <Route path="/finance" element={<EventzFinanceTracker />} />
+          <Route path="/droits" element={<DroitsPeriodPage />} />
           <Route path="/git" element={<CommeGit />} /> {/* ✅ new route */}
         </Routes>
       </div>

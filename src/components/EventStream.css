@@ -1,0 +1,52 @@
+.event-stream-card {
+	background: #fff;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px #0001;
+	margin-bottom: 18px;
+	padding: 0;
+	border: 1px solid #e0e0e0;
+	transition: box-shadow 0.2s;
+}
+.event-stream-card:hover {
+	box-shadow: 0 4px 24px #1976d2aa;
+}
+.event-stream-section {
+	background: #fff;
+	border-radius: 16px;
+	box-shadow: 0 6px 32px #0002;
+	padding: 32px 32px 24px 32px;
+	color: #222;
+	margin-top: 0;
+	margin-bottom: 32px;
+}
+.event-stream-title {
+	font-size: 1.4rem;
+	font-weight: 700;
+	margin-bottom: 22px;
+	color: #1976d2;
+	letter-spacing: 0.5px;
+	text-align: left;
+}
+.event-stream-inner {
+	padding: 0 8px;
+}
+.event-stream-empty {
+	color: #888;
+	padding: 8px 12px;
+}
+.event-stream-pre {
+	background: #fff;
+	color: #222;
+	border-radius: 8px;
+	margin: 0 0 18px 0;
+	padding: 16px 20px;
+	font-size: 1.07em;
+	line-height: 1.7;
+	box-shadow: 0 2px 8px #0001;
+	overflow-x: auto;
+	border: 1px solid #e0e0e0;
+	transition: box-shadow 0.2s;
+}
+.event-stream-pre:hover {
+	box-shadow: 0 4px 24px #1976d2aa;
+}
