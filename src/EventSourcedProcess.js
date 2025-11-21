@@ -1,4 +1,8 @@
 
+
+import { getReconciliationRows, getLatestPaymentPlanId } from './reconciliation/reconciliationQueries';
+import { createDecisionValideeEvent } from './reconciliation/reconciliationEvents';
+
 import React, { useState } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,8 +19,8 @@ const processSteps = [
   { id: 3, name: 'Mettre à jour la fin de droit (si changements début/fin)', optional: true },
   { id: 4, name: 'Mettre à jour les ressources', optional: true },
   { id: 5, name: 'Faire un plan de calcul (si changements ressources)', optional: false },
-  { id: 6, name: 'Reconcilier comptable: prestations, paiements', optional: false },
-  { id: 7, name: 'Valider la décision de fin de droit', optional: false },
+  { id: 6, name: 'Reconcilier prestations, paiements & Décision', optional: false },
+  { id: 7, name: 'Plan de paiement', optional: false },
 ];
 
 function getChangeId(events) {
@@ -26,6 +30,32 @@ function getChangeId(events) {
 }
 
 export default function EventSourcedProcess() {
+  // Step 6: Validate reconciliation and append DecisionValidee event
+  function validateReconciliation() {
+    // Only allow if step 6 is Ouverte
+    if (steps[6].state !== 'Ouverte') return;
+    // Gather required data
+    const reconciliationRows = getReconciliationRows(events);
+    if (!reconciliationRows.length) {
+      alert('Aucune donnée de rapprochement à valider.');
+      return;
+    }
+    // Assume all rows have the same planDeCalculId and changeId (from projection)
+    const planDeCalculId = reconciliationRows[0].calculationId;
+    const paymentPlanId = getLatestPaymentPlanId(events);
+    const deltaPerMonth = {};
+    reconciliationRows.forEach(row => {
+      deltaPerMonth[row.month] = row.delta;
+    });
+    const event = createDecisionValideeEvent({
+      changeId,
+      planDeCalculId,
+      paymentPlanId,
+      deltaPerMonth
+    });
+    appendWorkflowEvents(event);
+    setRerender(x => x + 1);
+  }
   const [, setRerender] = useState(0);
   const events = readWorkflowEventLog();
   const steps = getWorkflowStepsCached(WORKFLOW_ID);

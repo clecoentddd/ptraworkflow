@@ -1,5 +1,6 @@
-
 import workflowF from './workflowRules';
+import { automatePaymentPlanCreation } from './paymentPlan/paymentPlanAutomation';
+
 // workflowEventLog.js
 // EventZ Workflow Checklist: Event Log implementation
 // Stores and retrieves the append-only event log for workflow steps in localStorage
@@ -39,6 +40,11 @@ export function appendWorkflowEvents(newEvents) {
       const fEvents = workflowF(events, stamped);
       if (fEvents && fEvents.length > 0) {
         appendAndRunF(fEvents);
+      }
+      // Run payment plan automation after every event append
+      const autoEvents = automatePaymentPlanCreation(events);
+      if (autoEvents && autoEvents.length > 0) {
+        appendAndRunF(autoEvents);
       }
     }
   }

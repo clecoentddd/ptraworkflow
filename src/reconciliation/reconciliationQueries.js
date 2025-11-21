@@ -1,0 +1,28 @@
+// reconciliationQueries.js
+// Query functions for reconciliation, using the projection
+
+import { buildReconciliationProjection } from './reconciliationProjection';
+
+export function getReconciliationRows(events) {
+  const { calculated, paid, paymentPlanId, allMonths } = buildReconciliationProjection(events);
+
+  return allMonths.map(month => ({
+    month,
+    calculatedAmount: calculated[month]?.amount || 0,
+    calculationId: calculated[month]?.calculationId || '',
+    changeId: calculated[month]?.changeId || '',
+    amountPaid: paid[month] || 0,
+    delta: (calculated[month]?.amount || 0) - (paid[month] || 0),
+    paymentPlanId: paymentPlanId || ''
+  }));
+}
+
+export function getLatestPaymentPlanId(events) {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.event === "PaymentPlanCreated" && e.paymentPlanId) {
+      return e.paymentPlanId;
+    }
+  }
+  return '';
+}

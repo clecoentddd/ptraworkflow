@@ -7,8 +7,8 @@ const processStepsDef = [
   { id: 3, name: 'Mettre à jour la fin de droit' },
   { id: 4, name: 'Mettre à jour les ressources' },
   { id: 5, name: 'Faire un plan de calcul' },
-  { id: 6, name: 'Reconcilier comptable' },
-  { id: 7, name: 'Valider la décision de fin de droit' },
+  { id: 6, name: 'Reconcilier & Décision' },
+  { id: 7, name: 'Plan de paiement' },
 ];
 
 export default processStepsDef;
