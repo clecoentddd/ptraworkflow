@@ -1,7 +1,7 @@
 // UI component for updating droits period (step 3)
 // Only enabled if processStep === 'Ouverte'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import computeDroitsPeriod from '../projections/computeDroitsPeriod';
 import UpdateDroitsPeriodCommand from './UpdateDroitsPeriodCommand';
 import EventStream from '../../components/EventStream';
@@ -19,6 +19,12 @@ export default function UpdateDroitsPeriod({
   const [endMonth, setEndMonth] = useState(current.endMonth || '');
   const [error, setError] = useState('');
 
+  // Reset form fields when the current period changes (after successful save)
+  useEffect(() => {
+    setStartMonth(current.startMonth || '');
+    setEndMonth(current.endMonth || '');
+  }, [current.startMonth, current.endMonth]);
+
   const canEdit = processStep === 'Ouverte';
 
   function handleSubmit(e) {
@@ -28,6 +34,7 @@ export default function UpdateDroitsPeriod({
       if (!changeId) throw new Error('changeId is required');
       const cmd = UpdateDroitsPeriodCommand({ startMonth, endMonth, changeId });
       dispatchCommand(cmd);
+      // Do not reset fields here; let useEffect handle it after event is appended
     } catch (err) {
       setError(err.message);
     }

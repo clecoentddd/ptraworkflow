@@ -1,8 +1,11 @@
+
 import React, { useState } from 'react';
 import EventStream from '../components/EventStream';
-import ProcessFlowShared from '../sharedProjections/ProcessFlowShared';
-import computeEntries from './projections/computeEntries';
-import eventLogProjection from './projections/eventLogProjection';
+import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
+import { readWorkflowEventLog } from '../workflowEventLog';
+import { getWorkflowStepsCached } from '../workflowProjections';
+import computeEntries, { QueryRessourceEntries } from './projections/computeEntries';
+import getDatesDuDroit from './projections/getAllDroitsPeriods';
 import AddEntryCommand from './addEntry/AddEntryCommand';
 import handleAddEntry from './addEntry/handleAddEntry';
 import DeleteEntryCommand from './deleteEntry/DeleteEntryCommand';
@@ -11,42 +14,41 @@ import { v4 as uuidv4 } from 'uuid';
 import './FinanceTracker.css';
 import { incomeOptions, expenseOptions } from '../ressourceConfig';
 
-const STORAGE_KEY_EVENTS = 'eventzEvents';
-
-function loadEvents() {
-  const saved = localStorage.getItem(STORAGE_KEY_EVENTS);
-  return saved ? JSON.parse(saved) : [];
-}
-
-function saveEvents(events) {
-  localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(events));
-}
-
 const EventzFinanceTracker = () => {
-  const [events, setEvents] = useState(loadEvents());
+  // Use only the canonical event log for all projections and UI
+  const [, setEvents] = useState(readWorkflowEventLog());
   const [form, setForm] = useState({ type: 'income', code: '', amount: 0, startMonth: '', endMonth: '' });
-  const [processState, setProcessState] = useState(null);
-
+  // Canonical event-sourced workflow state
+  const eventLog = readWorkflowEventLog();
+  // Get workflow steps for gating
+  const steps = getWorkflowStepsCached('main-workflow');
+  // Get the latest droits period from event stream
+  const allDroitsPeriods = getDatesDuDroit(eventLog);
+  const latestDroitsPeriod = allDroitsPeriods.length > 0 ? allDroitsPeriods[allDroitsPeriods.length - 1] : null;
   // Helper: is write mode allowed?
-  const isStep4Ouverte = processState && processState.step4 === 'Ouverte' && !!processState.changeId;
+  // Removed unused changeId variable
+  // Editability is gated by step 4 being 'Ouverte'
+  const isStep4Ouverte = steps[4]?.state === 'Ouverte';
 
-  // Load process state from localStorage (eventSourcedProcessState)
-  React.useEffect(() => {
-    const raw = localStorage.getItem('eventSourcedProcessState');
-    if (raw) {
-      try {
-        setProcessState(JSON.parse(raw));
-      } catch {
-        setProcessState(null);
-      }
-    } else {
-      setProcessState(null);
-    }
-  }, []);
-
-  // Projection: entries grouped by month
-  const entriesByMonth = computeEntries(events);
+  // Projection: entries grouped by month (filtered by droit period)
+  const entriesByMonth = computeEntries();
   const allMonths = Object.keys(entriesByMonth).sort();
+
+  // State for raw query result
+  const [queryResult, setQueryResult] = useState(null);
+
+  function handleQuery() {
+    if (queryResult) {
+      setQueryResult(null);
+      return;
+    }
+    if (!latestDroitsPeriod) {
+      setQueryResult('No droits period');
+      return;
+    }
+    const byMonth = QueryRessourceEntries(latestDroitsPeriod.startMonth, latestDroitsPeriod.endMonth);
+    setQueryResult(byMonth);
+  }
   // Build a map of entryId to entry (unique entries)
   const entryMap = new Map();
   for (const month of allMonths) {
@@ -57,8 +59,8 @@ const EventzFinanceTracker = () => {
     }
   }
   const uniqueEntries = Array.from(entryMap.values());
-  // Filter by selected type (income/expense)
-  const filteredEntries = uniqueEntries.filter(e => e.type === form.type);
+  // Show all entries in the table (no filter by type)
+  const filteredEntries = uniqueEntries;
 
   // Helper: check if a month is in the entry's range
   function isMonthInRange(month, start, end) {
@@ -71,8 +73,7 @@ const EventzFinanceTracker = () => {
     return true;
   }
 
-  // Add entry handler
-  const handleAdd = () => {
+  function handleAdd() {
     if (!form.code || !form.startMonth || !form.endMonth || !form.amount) {
       alert('All fields are required.');
       return;
@@ -84,8 +85,26 @@ const EventzFinanceTracker = () => {
       alert('Start month must be before or equal to end month.');
       return;
     }
+    // Check if the selected period is within the latest droits period
+    if (!latestDroitsPeriod || !latestDroitsPeriod.startMonth || !latestDroitsPeriod.endMonth) {
+      alert('No droits period defined.');
+      return;
+    }
+    const [pSy, pSm] = latestDroitsPeriod.startMonth.split('-').map(Number);
+    const [pEy, pEm] = latestDroitsPeriod.endMonth.split('-').map(Number);
+    const startOk = (sy > pSy) || (sy === pSy && sm >= pSm);
+    const endOk = (ey < pEy) || (ey === pEy && em <= pEm);
+    if (!(startOk && endOk)) {
+      alert('You can only add entries within the current droits period.');
+      return;
+    }
     const entryId = uuidv4();
-    const changeId = processState && processState.changeId ? processState.changeId : null;
+    // Use canonical changeId from event-sourced workflow state
+    const changeId = (() => {
+      const eventLog = readWorkflowEventLog();
+      const last = [...eventLog].reverse().find(e => e.changeId);
+      return last ? last.changeId : null;
+    })();
     // Find label from config for event log, but not for UI
     const option = [...incomeOptions, ...expenseOptions].find(o => o.code === form.code);
     const label = option ? option.label : '';
@@ -100,37 +119,61 @@ const EventzFinanceTracker = () => {
       changeId
     });
     try {
-      const newEvents = handleAddEntry(events, command);
-      const updated = [...events, ...newEvents];
+      const newEvents = handleAddEntry(eventLog, command);
+      const updated = [...eventLog, ...newEvents];
       setEvents(updated);
-      saveEvents(updated);
+      // Write to canonical event log
+      localStorage.setItem('eventz_workflow_event_log', JSON.stringify(updated));
       setForm({ type: 'income', code: '', amount: 0, startMonth: '', endMonth: '' });
     } catch (e) {
       alert(e.message);
     }
-  };
-
-  // Delete entry handler
-  const handleDelete = (entryId) => {
+  }
+  function handleDelete(entryId) {
     const command = DeleteEntryCommand(entryId);
     try {
-      const newEvents = handleDeleteEntry(events, command);
-      const updated = [...events, ...newEvents];
+      const newEvents = handleDeleteEntry(eventLog, command);
+      const updated = [...eventLog, ...newEvents];
       setEvents(updated);
-      saveEvents(updated);
+      // Write to canonical event log
+      localStorage.setItem('eventz_workflow_event_log', JSON.stringify(updated));
     } catch (e) {
       alert(e.message);
     }
-  };
+  }
 
   return (
     <div className="droits-page-container" style={{ maxWidth: 1100, margin: '40px auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
-      {/* Process Flow (now on top, no card) */}
-      <ProcessFlowShared steps={processState ? require('../sharedProjections/processFlowProjection').default(processState) : []} />
+  {/* Process Flow (now on top, no card) */}
+  <ProcessFlowStatusBar />
+
+      {/* Display latest droits period */}
+      <div style={{ margin: '8px 0 16px 0', padding: '8px', background: '#f7f7f7', borderRadius: 6 }}>
+        <b>Période de droits courante (depuis l&apos;event stream):</b>
+        {latestDroitsPeriod ? (
+          <span style={{ marginLeft: 8 }}>
+            {latestDroitsPeriod.startMonth} &rarr; {latestDroitsPeriod.endMonth} {latestDroitsPeriod.ts ? <span style={{ color: '#888', fontSize: 12 }}>({latestDroitsPeriod.ts.slice(0, 10)})</span> : null}
+          </span>
+        ) : (
+          <span style={{ marginLeft: 8 }}>Aucune période définie.</span>
+        )}
+      </div>
 
       {/* Main Table/Form Card */}
       <div className="event-stream-section" style={{marginBottom: 0}}>
         <div className="event-stream-title">Ressources - Revenus / Dépenses (EventZ)</div>
+        <button onClick={handleQuery} style={{ marginBottom: 12, padding: '10px 24px', fontWeight: 600, borderRadius: 6, background: '#43a047', color: '#fff', border: 'none', fontSize: 16, cursor: 'pointer' }}>
+          {queryResult ? 'Fermer Projection' : 'Afficher Projection'}
+        </button>
+        {queryResult && (
+          <div style={{ margin: '12px 0', background: '#f6f6f6', padding: 16, borderRadius: 8, fontSize: 14, position: 'relative' }}>
+            <button onClick={handleQuery} style={{ position: 'absolute', top: 8, right: 8, background: '#e11d48', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}>Fermer</button>
+            <strong>Projection (raw):</strong>
+            <pre style={{ fontSize: 13, margin: 0 }}>
+              {typeof queryResult === 'string' ? queryResult : JSON.stringify(queryResult, null, 2)}
+            </pre>
+          </div>
+        )}
         <div className="form-row">
           <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} disabled={!isStep4Ouverte}>
             <option value="income">Income</option>
@@ -187,7 +230,10 @@ const EventzFinanceTracker = () => {
 
       {/* Event Stream Card */}
       <div className="event-stream-section">
-        <EventStream events={eventLogProjection(events)} maxHeight={260} />
+        <EventStream
+          events={eventLog.filter(e => e.event === 'EntryAdded' || e.event === 'EntryDeleted')}
+          maxHeight={260}
+        />
       </div>
     </div>
   );

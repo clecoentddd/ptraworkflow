@@ -1,46 +1,30 @@
-// Dedicated page for droits period management
 
 import React, { useState, useEffect } from 'react';
-
 import { UpdateDroitsPeriod } from './updateDroits';
 import './DroitsPeriodPage.css';
-import computeDroitsPeriod from './projections/computeDroitsPeriod';
-import ProcessFlowShared from '../sharedProjections/ProcessFlowShared';
+import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
 import EventStream from '../components/EventStream';
-import processFlowProjection from '../sharedProjections/processFlowProjection';
-import eventStreamProjection from '../sharedProjections/eventStreamProjection';
-
-const STORAGE_KEY_EVENTS = 'eventSourcedProcessEvents';
-const STORAGE_KEY_STATE = 'eventSourcedProcessState';
-
-function loadEvents() {
-  const saved = localStorage.getItem(STORAGE_KEY_EVENTS);
-  return saved ? JSON.parse(saved) : [];
-}
-
-function loadProcessState() {
-  const saved = localStorage.getItem(STORAGE_KEY_STATE);
-  return saved ? JSON.parse(saved) : {
-    step1: 'ToDo', step2: 'ToDo', step3: 'ToDo', step4: 'ToDo', step5: 'ToDo', step6: 'ToDo', changeId: null
-  };
-}
+import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
+import { getWorkflowStepsCached } from '../workflowProjections';
 
 
 export default function DroitsPeriodPage() {
-  const [eventLog, setEventLog] = useState(loadEvents());
-  const [processState, setProcessState] = useState(loadProcessState());
+  const [, setRerender] = useState(0);
+  const eventLog = readWorkflowEventLog();
+  const steps = getWorkflowStepsCached('main-workflow');
   const [error, setError] = useState('');
 
-
-  // Projected process steps
-  const processSteps = processFlowProjection(processState);
-  // Projected event stream (droits only)
-  const droitsEvents = eventStreamProjection(eventLog, e => e.event === 'PeriodesDroitsModifiees');
+  // No need for processSteps, handled by ProcessFlowStatusBar
 
   // Only allow edit if changeId exists and step3 is 'Ouverte'
-  const canEdit = processState.changeId && processState.step3 === 'Ouverte';
+  const changeId = (() => {
+    // Find the latest event with a changeId
+    const last = [...eventLog].reverse().find(e => e.changeId);
+    return last ? last.changeId : null;
+  })();
+  const canEdit = changeId && steps[3]?.state === 'Ouverte';
 
-  // Command dispatcher: update local eventLog and localStorage
+  // Command dispatcher: update event log via event-sourced workflow
   function handleDispatch(cmd) {
     setError('');
     if (!canEdit) {
@@ -49,22 +33,20 @@ export default function DroitsPeriodPage() {
     }
     // Attach current changeId if missing
     if (!cmd.payload.changeId) {
-      cmd.payload.changeId = processState.changeId;
+      cmd.payload.changeId = changeId;
     }
     import('./updateDroits/handleUpdateDroitsPeriod').then(mod => {
       try {
         const handler = mod.default;
         const newEvents = handler(eventLog, cmd);
-        const updated = [...eventLog, ...newEvents.map((ev, i) => ({
-          id: Date.now() + Math.random() + i,
-            ts: ev.ts,
-          event: ev.event,
-          stepId: 3,
-          changeId: ev.changeId,
-          data: ev.payload,
-        }))];
-        setEventLog(updated);
-        localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(updated));
+        // Append new events to the main workflow event log
+        appendWorkflowEvents(newEvents.map(ev => ({
+          ...ev,
+          workflowId: 'main-workflow',
+          step: 3,
+          changeId: cmd.payload.changeId,
+        })));
+        setRerender(x => x + 1);
       } catch (err) {
         setError(err.message);
       }
@@ -72,16 +54,7 @@ export default function DroitsPeriodPage() {
   }
 
 
-  function getStatusClass(status) {
-    switch (status) {
-      case 'ToDo': return 'status-todo';
-      case 'Done': return 'status-done';
-      case 'Skipped': return 'status-skipped';
-      case 'Ouverte': return 'status-ouverte';
-      case 'Ignored': return 'status-ignored';
-      default: return '';
-    }
-  }
+  // getStatusClass is unused
 
   // CSS for this page
   useEffect(() => {
@@ -125,7 +98,7 @@ export default function DroitsPeriodPage() {
   return (
     <div className="droits-page-container" style={{ maxWidth: 1100, margin: '40px auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
       {/* Process Flow (now on top, no card) */}
-      <ProcessFlowShared steps={processSteps} />
+  <ProcessFlowStatusBar />
       {/* Modification Form Card */}
       <div className="event-stream-section" style={{marginBottom: 0}}>
         <div className="event-stream-title">Gestion de la période de droits</div>
@@ -134,7 +107,7 @@ export default function DroitsPeriodPage() {
           processStep={canEdit ? 'Ouverte' : 'Verrouillée'}
           dispatchCommand={handleDispatch}
           eventLog={eventLog}
-          changeId={processState.changeId}
+          changeId={changeId}
         />
         {error && <div className="error" style={{ color: '#d32f2f', marginTop: 8 }}>{error}</div>}
       </div>

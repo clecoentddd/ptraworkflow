@@ -35,18 +35,15 @@
 	padding: 8px 12px;
 }
 .event-stream-pre {
-	background: #fff;
 	color: #222;
-	border-radius: 8px;
-	margin: 0 0 18px 0;
+	margin: 0;
 	padding: 16px 20px;
 	font-size: 1.07em;
 	line-height: 1.7;
-	box-shadow: 0 2px 8px #0001;
 	overflow-x: auto;
-	border: 1px solid #e0e0e0;
-	transition: box-shadow 0.2s;
-}
-.event-stream-pre:hover {
-	box-shadow: 0 4px 24px #1976d2aa;
+	background: none;
+	border: none;
+	box-shadow: none;
+	border-radius: 0;
+	transition: none;
 }

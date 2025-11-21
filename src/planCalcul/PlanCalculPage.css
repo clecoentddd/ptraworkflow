@@ -1,0 +1,63 @@
+/* PlanCalculPage modern layout, matching FinanceTracker */
+.plan-calcul-container {
+  background: #f8fafc;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 32px 24px 24px 24px;
+  margin: 32px auto 32px auto;
+  max-width: 980px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Remove any top margin/padding above header */
+}
+
+.plan-calcul-container h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+  margin-top: 0;
+  color: #2563eb;
+  letter-spacing: 0.5px;
+}
+
+.plan-calcul-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 28px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+  overflow: hidden;
+}
+.plan-calcul-table th,
+.plan-calcul-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+  font-size: 15px;
+}
+.plan-calcul-table th {
+  background: #f3f4f6;
+  font-weight: 700;
+  color: #222;
+  border-bottom: 2px solid #e5e7eb;
+}
+.plan-calcul-table tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 1024px) {
+  .plan-calcul-table th, .plan-calcul-table td {
+    padding: 10px 6px;
+  }
+}
+@media (max-width: 768px) {
+  .plan-calcul-container {
+    padding: 10px;
+  }
+  .plan-calcul-table th,
+  .plan-calcul-table td {
+    font-size: 13px;
+    padding: 8px 4px;
+  }
+}

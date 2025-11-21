@@ -1,11 +1,15 @@
 // Projection: returns process steps and their status from processState
+import processStepsDef from './processStepsDef';
+
 export default function processFlowProjection(processState) {
-  return [
-    { id: 1, name: 'Créer la mutation', status: processState.step1 },
-    { id: 2, name: 'Suspendre les paiements', status: processState.step2 },
-    { id: 3, name: 'Mettre à jour la fin de droit', status: processState.step3 },
-    { id: 4, name: 'Mettre à jour le plan de calcul', status: processState.step4 },
-    { id: 5, name: 'Reconcilier droit, prestations, paiements', status: processState.step5 },
-    { id: 6, name: 'Valider la décision de fin de droit', status: processState.step6 },
-  ];
+  return processStepsDef.map(step => {
+    // For backward compatibility, if processState has only 6 steps, treat step6 as old step5, step7 as old step6
+    let status = processState[`step${step.id}`];
+    if (status === undefined && step.id === 6 && processState.step5) status = processState.step5;
+    if (status === undefined && step.id === 7 && processState.step6) status = processState.step6;
+    return {
+      ...step,
+      status
+    };
+  });
 }

@@ -1,5 +1,34 @@
+import { readWorkflowEventLog } from '../../workflowEventLog';
+import getDatesDuDroit from './getAllDroitsPeriods';
+// Query: get resource entries grouped by month for a given period from canonical event log
+// Usage: QueryRessourceEntries(startMonth, endMonth) => { [month]: [entries] }
+export function QueryRessourceEntries(startMonth, endMonth) {
+	// Always use the canonical workflow event log for both params
+	const eventLog = readWorkflowEventLog();
+	console.log('[QueryRessourceEntries] eventLog:', eventLog);
+	// If a period is specified, filter to that period, else use the latest
+	let period = null;
+	if (startMonth && endMonth) {
+		const allDroitsPeriods = getDatesDuDroit(eventLog);
+		period = allDroitsPeriods.find(
+			p => p.startMonth === startMonth && p.endMonth === endMonth
+		);
+	}
+	// If no period found, use the latest droits period
+	if (!period) {
+		const allDroitsPeriods = getDatesDuDroit(eventLog);
+		period = allDroitsPeriods.length > 0 ? allDroitsPeriods[allDroitsPeriods.length - 1] : null;
+	}
+	if (!period) {
+		return {};
+	}
+	// Filter eventLog to only include events up to the end of the selected period (optional, for strictness)
+	// For now, just use the canonical event log in computeEntries
+	return computeEntries();
+}
 // Projection: compute entries grouped by month from event stream
 // Usage: computeEntries(events) => { [month]: [entries] }
+
 
 function monthRange(start, end) {
 	// start, end: 'YYYY-MM'
@@ -14,15 +43,49 @@ function monthRange(start, end) {
 	return result;
 }
 
-function computeEntries(events) {
+function isMonthInRange(month, start, end) {
+	if (!month || !start || !end) return false;
+	const [my, mm] = month.split('-').map(Number);
+	const [sy, sm] = start.split('-').map(Number);
+	const [ey, em] = end.split('-').map(Number);
+	if (my < sy || (my === sy && mm < sm)) return false;
+	if (my > ey || (my === ey && mm > em)) return false;
+	return true;
+}
+
+function computeEntries() {
+	// Always use the canonical workflow event log
+	const eventLog = readWorkflowEventLog();
+	const allDroitsPeriods = getDatesDuDroit(eventLog || []);
+	const latestDroitsPeriod = allDroitsPeriods.length > 0 ? allDroitsPeriods[allDroitsPeriods.length - 1] : null;
+	const droitStart = latestDroitsPeriod?.startMonth;
+	const droitEnd = latestDroitsPeriod?.endMonth;
+
+	console.log('[computeEntries] eventLog:', eventLog);
+	console.log('[computeEntries] latestDroitsPeriod:', latestDroitsPeriod);
+	const entryAddedEvents = eventLog.filter(e => e.event === 'EntryAdded');
+	console.log('[computeEntries] EntryAdded events:', entryAddedEvents.map(e => ({
+	  entryId: e.entryId,
+	  changeId: e.changeId,
+	  startMonth: e.payload?.startMonth,
+	  endMonth: e.payload?.endMonth,
+	  payload: e.payload
+	})));
+
 	const byMonth = {};
 	// Find all cancelled changeIds
-	const cancelled = new Set(events.filter(e => e.event === 'ChangeCancelled').map(e => e.changeId));
-	for (const e of events) {
+	const cancelled = new Set(eventLog.filter(e => e.event === 'ChangeCancelled').map(e => e.changeId));
+	for (const e of eventLog) {
 		if (e.event === 'EntryAdded') {
 			if (cancelled.has(e.changeId)) continue;
 			const { startMonth, endMonth } = e.payload || {};
 			if (!startMonth || !endMonth) continue;
+			// Only include if entry is within the droit period
+			if (!droitStart || !droitEnd) continue;
+			// entry must be fully within droit period
+			const entryStartOk = isMonthInRange(startMonth, droitStart, droitEnd);
+			const entryEndOk = isMonthInRange(endMonth, droitStart, droitEnd);
+			if (!(entryStartOk && entryEndOk)) continue;
 			for (const month of monthRange(startMonth, endMonth)) {
 				if (!byMonth[month]) byMonth[month] = [];
 				byMonth[month].push({ ...e.payload, entryId: e.entryId, changeId: e.changeId });
@@ -41,6 +104,7 @@ function computeEntries(events) {
 			}
 		}
 	}
+	console.log('[computeEntries] byMonth:', byMonth);
 	return byMonth;
 }
 
