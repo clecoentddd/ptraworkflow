@@ -93,7 +93,8 @@ export default function PlanCalculPage() {
   function handleCalculate() {
     if (!canCalculate || !latestDroitsPeriod) return;
     // For each month, sum all validated entries (income - expenses) for this changeId
-    const ressources = months.map(month => {
+    // Calculate raw amounts per month
+    const rawRessources = months.map(month => {
       const entries = filteredByChangeId[month] || [];
       let totalIncome = 0;
       let totalExpense = 0;
@@ -103,19 +104,21 @@ export default function PlanCalculPage() {
       }
       return { month, amount: totalIncome - totalExpense };
     });
+    // Calculate 10% amounts per month
+    const calcRessources = rawRessources.map(r => ({ month: r.month, amount: Math.round(r.amount * 0.1 * 100) / 100 }));
     const calcEvent = createCalculation({
       changeId,
       startMonth: latestDroitsPeriod.startMonth,
       endMonth: latestDroitsPeriod.endMonth,
-      ressources
+      ressources: calcRessources
     });
-    // Also emit PlanDeCalculEffectuéEvent for event stream, with calculationId
+    // PlanDeCalculEffectué event should use calculated (10%) amounts
     const planDeCalculEvent = createPlanDeCalculEffectueEvent({
       changeId,
       calculationId: calcEvent.calculationId,
       startMonth: latestDroitsPeriod.startMonth,
       endMonth: latestDroitsPeriod.endMonth,
-      ressources
+      ressources: calcRessources
     });
     appendWorkflowEvents([calcEvent, planDeCalculEvent]);
     setMessage('Calculation done!');
@@ -173,7 +176,7 @@ export default function PlanCalculPage() {
               </thead>
               <tbody>
                 <tr style={{ fontWeight: 600 }}>
-                  <td>Total calculé</td>
+                  <td>Total Ressources/Dépenses</td>
                   {months.map(month => {
                     let total = 0;
                     const entries = filteredByChangeId[month] || [];
@@ -198,10 +201,16 @@ export default function PlanCalculPage() {
                 })}
                 {lastCalc && (
                   <tr style={{ background: '#f9fbe7', fontWeight: 600 }}>
-                    <td style={{ color: '#888' }}>Dernier calcul enregistré<br /><span style={{ fontSize: 12 }}>changeId: {lastCalc.changeId}</span></td>
+                    <td style={{ color: '#888' }}>Dernier calcul enregistré<br /><span style={{ fontSize: 12 }}>calculationId: {lastCalc.calculationId}</span></td>
                     {months.map(month => {
-                      const found = lastCalc.monthly.find(row => row.month === month);
-                      return <td key={month}>{found ? `${found.amount} €` : ''}</td>;
+                      // Use the calculated 10% value from PlanDeCalculEffectué event
+                      const planDeCalculEvent = eventLog.filter(e => e.event === 'PlanDeCalculEffectué' && e.changeId === lastCalc.changeId).slice(-1)[0];
+                      let value = '';
+                      if (planDeCalculEvent && planDeCalculEvent.payload && planDeCalculEvent.payload.ressources) {
+                        const found = planDeCalculEvent.payload.ressources.find(row => row.month === month);
+                        value = found ? `${found.amount} €` : '';
+                      }
+                      return <td key={month}>{value}</td>;
                     })}
                   </tr>
                 )}

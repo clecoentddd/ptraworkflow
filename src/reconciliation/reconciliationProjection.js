@@ -1,36 +1,35 @@
 // Returns { deltaPerMonth, calculationId, changeId, paymentPlanId }
 export function getDeltaPerMonth(events) {
-  const calculated = {};
-  const paid = {};
-  let paymentPlanId = null;
+  // Find the latest PlanDeCalculEffectué event
+  const latestCalcEvent = [...events].reverse().find(e => e.event === "PlanDeCalculEffectué");
   let calculationId = null;
   let changeId = null;
-
-  for (const e of events) {
-    if (e.event === "PlanDeCalculEffectué") {
-      calculationId = e.calculationId || '';
-      changeId = e.changeId || '';
-      for (const res of e.payload.ressources) {
-        calculated[res.month] = res.amount;
-      }
+  const calculated = {};
+  if (latestCalcEvent) {
+    calculationId = latestCalcEvent.calculationId || '';
+    changeId = latestCalcEvent.changeId || '';
+    for (const res of latestCalcEvent.payload.ressources) {
+      calculated[res.month] = res.amount;
     }
-    if (e.event === "PaymentPlanCreated") {
-      paymentPlanId = e.paymentPlanId;
-      for (const pay of e.payload.payments) {
-        paid[pay.month] = pay.amountPaid;
-      }
+  }
+  // Find the latest PaymentPlanCreated event
+  const latestPaymentPlanEvent = [...events].reverse().find(e => e.event === "PaymentPlanCreated");
+  let paymentPlanId = null;
+  const paid = {};
+  if (latestPaymentPlanEvent) {
+    paymentPlanId = latestPaymentPlanEvent.paymentPlanId;
+    for (const pay of latestPaymentPlanEvent.payload.payments) {
+      paid[pay.month] = pay.amountPaid;
     }
   }
   const allMonths = Array.from(new Set([...Object.keys(calculated), ...Object.keys(paid)])).sort();
-  const deltaPerMonth = {};
-  allMonths.forEach(month => {
-    deltaPerMonth[month] = (calculated[month] || 0) - (paid[month] || 0);
-  });
   return {
-    deltaPerMonth,
+    calculated,
+    paid,
     calculationId,
     changeId,
-    paymentPlanId
+    paymentPlanId,
+    allMonths
   };
 }
 

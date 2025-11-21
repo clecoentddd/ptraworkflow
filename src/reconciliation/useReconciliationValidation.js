@@ -29,14 +29,34 @@ export function useReconciliationValidation() {
   return true;
   }
 
-  // Build a reconciliation array for the table UI
-  const reconciliation = Object.keys(deltaPerMonth || {}).map(month => ({
+  // Find the latest PlanDeCalculEffectué event for each changeId/month
+  const calcEvents = eventLog.filter(e => e.event === "PlanDeCalculEffectué");
+  const paymentEvents = eventLog.filter(e => e.event === "PaymentPlanCreated");
+  const latestCalculated = {};
+  const latestPaid = {};
+  let calcId = null;
+  let chgId = null;
+  calcEvents.forEach(e => {
+    calcId = e.calculationId || calcId;
+    chgId = e.changeId || chgId;
+    e.payload.ressources.forEach(res => {
+      // Always use the latest calculation for each month
+      latestCalculated[res.month] = res.amount / 10;
+    });
+  });
+  paymentEvents.forEach(e => {
+    e.payload.payments.forEach(pay => {
+      latestPaid[pay.month] = pay.amountPaid / 10;
+    });
+  });
+  const allMonths = Array.from(new Set([...Object.keys(latestCalculated), ...Object.keys(latestPaid)])).sort();
+  const reconciliation = allMonths.map(month => ({
     month,
-    calculatedAmount: 0, // Not tracked in deltaPerMonth, can be added if needed
-    amountPaid: 0, // Not tracked in deltaPerMonth, can be added if needed
-    delta: deltaPerMonth[month],
-    calculationId,
-    changeId
+    calculatedAmount: latestCalculated[month] || 0, // This is the calculation, not the delta
+    amountPaid: latestPaid[month] || 0,
+    toPayOrReimburse: (latestCalculated[month] || 0) - (latestPaid[month] || 0),
+    calculationId: calcId,
+    changeId: chgId
   }));
 
   return {
