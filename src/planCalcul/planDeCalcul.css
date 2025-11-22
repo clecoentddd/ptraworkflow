@@ -1,0 +1,112 @@
+/* Projection box and close button styles */
+.plan-de-calcul-projection {
+  position: relative;
+  padding: 18px 18px 12px 18px;
+  background: #222;
+  border-radius: 8px;
+  color: #fff;
+  margin-bottom: 18px;
+  min-width: 320px;
+}
+.plan-de-calcul-close-proj-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #e11d48;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+  z-index: 2;
+}
+.plan-de-calcul-projection-pre {
+  font-size: 13px;
+  margin: 0;
+  background: transparent;
+  color: #fff;
+  white-space: pre-wrap;
+}
+/* Button styles for PlanCalculPage */
+.plan-de-calcul-calc-btn {
+  padding: 10px 24px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+.plan-de-calcul-calc-btn.disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+.plan-de-calcul-proj-btn {
+  padding: 10px 24px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #43a047;
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+/* Spacing and layout from PlanCalculPage.js */
+.plan-de-calcul-period {
+  margin-bottom: 20px;
+}
+.plan-de-calcul-actions {
+  margin-bottom: 24px;
+}
+.plan-de-calcul-table-section {
+  margin-top: 32px;
+}
+.plan-de-calcul-table-section h3 {
+  margin-bottom: 12px;
+}
+.plan-de-calcul-period {
+  margin: 8px 0 16px 0;
+  padding: 8px;
+  background: #f7f7f7;
+  border-radius: 6px;
+}
+
+
+
+.plan-de-calcul-table-section {
+  margin-top: 32px;
+}
+.plan-de-calcul-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 28px;
+  margin-top: 0;
+}
+.income-row td {
+  background: #e8f5e9;
+}
+.expense-row td {
+  background: #ffebee;
+}
+.plan-de-calcul-last-calc-row {
+  background: #f9fbe7;
+  font-weight: 600;
+}
+.plan-de-calcul-last-calc-row td {
+  color: #888;
+}
+.plan-de-calcul-event-stream-container {
+  max-width: 980px;
+  margin: 0 auto;
+  background: #f1f5f9;
+  padding: 20px 18px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+}
+

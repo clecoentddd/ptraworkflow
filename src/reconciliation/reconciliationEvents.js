@@ -2,7 +2,7 @@
 // Event creator for reconciliation validation (step 6)
 import { v4 as uuidv4 } from 'uuid';
 
-export function createDecisionValideeEvent({ changeId, planDeCalculId, paymentPlanId, deltaPerMonth }) {
+export function createDecisionValideeEvent({ changeId, planDeCalculId, paymentPlanId, deltaPerMonth, payments }) {
   return {
     event: 'DecisionValidee',
     decisionId: uuidv4(),
@@ -10,7 +10,8 @@ export function createDecisionValideeEvent({ changeId, planDeCalculId, paymentPl
     planDeCalculId,
     paymentPlanId,
     payload: {
-      deltaPerMonth
+      deltaPerMonth,
+      payments
     },
     ts: new Date().toISOString()
   };

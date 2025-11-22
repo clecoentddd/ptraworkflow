@@ -148,7 +148,7 @@ const EventzFinanceTracker = () => {
   <ProcessFlowStatusBar />
 
       {/* Display latest droits period */}
-      <div style={{ margin: '8px 0 16px 0', padding: '8px', background: '#f7f7f7', borderRadius: 6 }}>
+  <div style={{ margin: '8px 0 24px 0', padding: '8px', background: '#f7f7f7', borderRadius: 6 }}>
         <b>Période de droits courante (depuis l&apos;event stream):</b>
         {latestDroitsPeriod ? (
           <span style={{ marginLeft: 8 }}>
@@ -162,7 +162,7 @@ const EventzFinanceTracker = () => {
       {/* Main Table/Form Card */}
       <div className="event-stream-section" style={{marginBottom: 0}}>
         <div className="event-stream-title">Ressources - Revenus / Dépenses (EventZ)</div>
-        <button onClick={handleQuery} style={{ marginBottom: 12, padding: '10px 24px', fontWeight: 600, borderRadius: 6, background: '#43a047', color: '#fff', border: 'none', fontSize: 16, cursor: 'pointer' }}>
+        <button onClick={handleQuery} style={{ float: 'right', marginBottom: 12, padding: '10px 24px', fontWeight: 600, borderRadius: 6, background: '#43a047', color: '#fff', border: 'none', fontSize: 16, cursor: 'pointer' }}>
           {queryResult ? 'Fermer Projection' : 'Afficher Projection'}
         </button>
         {queryResult && (
@@ -229,12 +229,10 @@ const EventzFinanceTracker = () => {
       </div>
 
       {/* Event Stream Card */}
-      <div className="event-stream-section">
-        <EventStream
-          events={eventLog.filter(e => e.event === 'EntryAdded' || e.event === 'EntryDeleted')}
-          maxHeight={260}
-        />
-      </div>
+      <EventStream
+        events={eventLog.filter(e => e.event === 'EntryAdded' || e.event === 'EntryDeleted')}
+        maxHeight={260}
+      />
     </div>
   );
 };

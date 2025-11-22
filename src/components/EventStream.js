@@ -11,7 +11,8 @@ import './EventStream.css';
 export default function EventStream({ events, filter, maxHeight = 260, showTitle = true }) {
   const filtered = filter ? events.filter(filter) : events;
   return (
-    <div style={{ maxHeight }}>
+    <div className="event-stream-section" style={{ maxHeight }}>
+      {showTitle && <div className="event-stream-title">Event Stream</div>}
       <div className="event-stream-inner">
         {filtered.length === 0 ? (
           <div className="event-stream-empty">No events yet...</div>

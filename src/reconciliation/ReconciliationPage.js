@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import EventStream from '../components/EventStream';
 import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
 import '../planCalcul/PlanCalculPage.css';
 import { useReconciliationValidation } from './useReconciliationValidation';
 import { getStepState } from '../workflowProjections';
 import { readWorkflowEventLog } from '../workflowEventLog';
 import { getDeltaPerMonth } from './reconciliationProjection';
+  // Filter DecisionValidee events for event stream
+  const allEvents = readWorkflowEventLog();
+  const decisionEvents = allEvents.filter(e => e.event === 'DecisionValidee');
 
 export default function ReconciliationPage() {
   const {
@@ -12,13 +16,22 @@ export default function ReconciliationPage() {
     calculationId,
     changeId,
     paymentPlanId,
-    alreadyValidated,
     validate,
     eventLog
   } = useReconciliationValidation();
 
-  // Get workflowId from latest event with calculationId/changeId
-  const workflowId = eventLog.find(e => e.calculationId === calculationId && e.changeId === changeId)?.workflowId;
+  // Disable button if DecisionValidee event exists for current changeId and calculationId
+  const alreadyValidated = eventLog.some(e =>
+    e.event === 'DecisionValidee' &&
+    e.changeId === changeId &&
+    e.planDeCalculId === calculationId
+  );
+
+  // Get workflowId from latest event with calculationId/changeId, fallback to latest workflowId
+  let workflowId = eventLog.find(e => e.calculationId === calculationId && e.changeId === changeId)?.workflowId;
+  if (!workflowId) {
+    workflowId = [...eventLog].reverse().find(e => e.workflowId)?.workflowId;
+  }
   // Get step 6 state
   const step6State = workflowId ? getStepState(eventLog, workflowId, 6).state : 'ToDo';
 
@@ -37,16 +50,16 @@ export default function ReconciliationPage() {
           <button
             className="btn btn-primary"
             onClick={validate}
-            disabled={alreadyValidated || step6State !== 'Ouverte' || !calculationId || !changeId || !paymentPlanId}
+            disabled={alreadyValidated || step6State !== 'Ouverte' || !calculationId || !changeId}
           >
             Valider Rapprochement
           </button>
           <button
             className="btn btn-secondary"
-            style={{ marginLeft: 12 }}
+            style={{ float: 'right', marginLeft: 12 }}
             onClick={() => setShowRaw(r => !r)}
           >
-            {showRaw ? 'Masquer projection brute' : 'Afficher projection brute'}
+            {showRaw ? 'Masquer projection' : 'Afficher projection'}
           </button>
           {alreadyValidated && (
             <span style={{ color: '#388e3c', marginLeft: 12 }}>
@@ -78,9 +91,9 @@ export default function ReconciliationPage() {
             {reconciliation.map(row => (
               <tr key={row.month}>
                 <td>{row.month}</td>
-                <td>{row.calculatedAmount}</td>
-                <td>{row.amountPaid}</td>
-                <td>{row.toPayOrReimburse}</td>
+                <td>{Number(row.calculatedAmount).toFixed(2)}</td>
+                <td>{Number(row.amountPaid).toFixed(2)}</td>
+                <td>{Number(row.toPayOrReimburse).toFixed(2)}</td>
               </tr>
             ))}
             {/* Summary row: Total calculé and paid */}
@@ -104,6 +117,13 @@ export default function ReconciliationPage() {
           </tbody>
         </table>
       </div>
+      {/* Event Stream Card for DecisionValidee */}
+      <EventStream
+        events={decisionEvents}
+        showTitle={true}
+        maxHeight={320}
+        filter={null}
+      />
     </div>
   );
 }

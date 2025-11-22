@@ -17,16 +17,23 @@ export function useReconciliationValidation() {
 
   function validate() {
     // All business logic is in the projection
-    if (alreadyValidated) return false;
-    if (!calculationId || !changeId || !paymentPlanId) return false;
+  // Allow generating the decision again, do not block if alreadyValidated
+    if (!calculationId || !changeId) return false;
+    // Build payments per month from latestCalculated if deltaPerMonth is empty
+    let paymentsPerMonth = Object.entries(deltaPerMonth || {}).map(([month, amount]) => ({ month, amount }));
+    if (paymentsPerMonth.length === 0) {
+      // fallback to latestCalculated
+      paymentsPerMonth = Object.entries(latestCalculated).map(([month, amount]) => ({ month, amount }));
+    }
     const event = createDecisionValideeEvent({
       changeId,
       planDeCalculId: calculationId,
-      paymentPlanId,
-      deltaPerMonth
+      paymentPlanId: paymentPlanId || null,
+      deltaPerMonth,
+      payments: paymentsPerMonth
     });
-  appendWorkflowEvents(event);
-  return true;
+    appendWorkflowEvents(event);
+    return true;
   }
 
   // Find the latest PlanDeCalculEffectué event for each changeId/month
@@ -41,12 +48,12 @@ export function useReconciliationValidation() {
     chgId = e.changeId || chgId;
     e.payload.ressources.forEach(res => {
       // Always use the latest calculation for each month
-      latestCalculated[res.month] = res.amount / 10;
+      latestCalculated[res.month] = res.amount;
     });
   });
   paymentEvents.forEach(e => {
     e.payload.payments.forEach(pay => {
-      latestPaid[pay.month] = pay.amountPaid / 10;
+      latestPaid[pay.month] = pay.amountPaid;
     });
   });
   const allMonths = Array.from(new Set([...Object.keys(latestCalculated), ...Object.keys(latestPaid)])).sort();
