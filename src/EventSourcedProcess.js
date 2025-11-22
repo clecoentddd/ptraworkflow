@@ -235,10 +235,8 @@ export default function EventSourcedProcess() {
             <div className="success-message">✅ Mutation Terminée avec Succès</div>
           )}
         </div>
-        <div className="event-stream-section">
-          <div className="event-stream-title">Event Stream</div>
-          <EventStream events={events} maxHeight={10000} />
-        </div>
+        {/* Use EventStream directly, which already includes its own container */}
+        <EventStream events={events} maxHeight={10000} />
       </div>
     </div>
   );
