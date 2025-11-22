@@ -17,9 +17,9 @@ function App() {
         <nav style={{ padding: '16px', background: '#f0f0f0' }}>
           <Link to="/" style={{ marginRight: '16px' }}>Process</Link>
           <Link to="/droits" style={{ marginRight: '16px' }}>Droits</Link>
-          <Link to="/finance" style={{ marginRight: '16px' }}>Finance Tracker</Link>
+          <Link to="/finance" style={{ marginRight: '16px' }}>Ressources</Link>
           <Link to="/plan-calcul" style={{ marginRight: '16px' }}>Plan de Calcul</Link>
-          <Link to="/reconciliation" style={{ marginRight: '16px' }}>Rapprochement</Link>
+          <Link to="/reconciliation" style={{ marginRight: '16px' }}>Reconciliation</Link>
           <Link to="/payment-plan" style={{ marginRight: '16px' }}>Payment Plan</Link>
           <Link to="/git">Comme Git</Link>
           <Link to="/todos" style={{ marginRight: '16px' }}>Todo List</Link>
