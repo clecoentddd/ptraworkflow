@@ -30,6 +30,19 @@ function getChangeId(events) {
 }
 
 export default function EventSourcedProcess() {
+  // ...existing code...
+  // Initialize state and event log
+  const [rerender, setRerender] = useState(0);
+  const events = readWorkflowEventLog();
+  // Always use the latest projection, not the cached version
+  const { projectWorkflowSteps } = require('./workflowProjections');
+  const steps = projectWorkflowSteps(events, WORKFLOW_ID);
+  // Debug: log step 7 status and all step 7 events
+  console.log('Workflow steps:', steps);
+  console.log('Step 7 status:', steps[7]);
+  const step7Events = events.filter(e => e.step === 7);
+  console.log('Step 7 events:', step7Events);
+  console.log('Event log:', events);
   // Step 6: Validate reconciliation and append DecisionValidee event
   function validateReconciliation() {
     // Only allow if step 6 is Ouverte
@@ -37,7 +50,7 @@ export default function EventSourcedProcess() {
     // Gather required data
     const reconciliationRows = getReconciliationRows(events);
     if (!reconciliationRows.length) {
-      alert('Aucune donnée de rapprochement à valider.');
+      alert('Aucune donnée de Reconciliation à valider.');
       return;
     }
     // Assume all rows have the same planDeCalculId and changeId (from projection)
@@ -56,9 +69,6 @@ export default function EventSourcedProcess() {
     appendWorkflowEvents(event);
     setRerender(x => x + 1);
   }
-  const [, setRerender] = useState(0);
-  const events = readWorkflowEventLog();
-  const steps = getWorkflowStepsCached(WORKFLOW_ID);
 
   // Reset the workflow event log and UI
   function resetProcess() {
@@ -72,7 +82,7 @@ export default function EventSourcedProcess() {
     startProcess();
   }
   const changeId = getChangeId(events);
-  const processCompleted = steps[6]?.state === 'Done';
+  const processCompleted = steps[7]?.state === 'Done';
   const [errorMessage] = useState(null);
 
 
@@ -99,8 +109,7 @@ export default function EventSourcedProcess() {
      -------------------------- */
 
     function startProcess() {
-      if (changeId && !processCompleted) return;
-      // Generate a new changeId for the new workflow
+      // Start a new workflow: only open step 1 with a new changeId
       const newChangeId = uuidv4();
       appendWorkflowEvents({
         event: 'StepOpened',
@@ -178,7 +187,7 @@ export default function EventSourcedProcess() {
 
   return (
     <div className="process-container">
-      <h1 className="main-title">EventZ Workflow Checklist (Event Sourced)</h1>
+      <h1 className="main-title">EventZ - Processus Prestations</h1>
       <div className="content-grid">
         <div className="panel">
           <div className="panel-header">

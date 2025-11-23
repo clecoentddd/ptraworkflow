@@ -5,7 +5,7 @@ import EventzFinanceTracker from './ressources/EventzFinanceTracker';
 import PaymentPlanPage from './paymentPlan/PaymentPlanPage';
 import DroitsPeriodPage from './droits/DroitsPeriodPage';
 import CommeGit from './CommeGit';
-import EventzTodoList from './EventzTodoList';
+import TodoWorkflow from './TodoWorkflow/TodoWorkflow';
 import PlanCalculPage from './planCalcul/PlanCalculPage';
 import ReconciliationPage from './reconciliation/ReconciliationPage';
 import './App.css';
@@ -31,7 +31,7 @@ function App() {
           <Route path="/droits" element={<DroitsPeriodPage />} />
           <Route path="/plan-calcul" element={<PlanCalculPage />} />
           <Route path="/git" element={<CommeGit />} />
-          <Route path="/todos" element={<EventzTodoList />} />
+          <Route path="/todos" element={<TodoWorkflow />} />
           <Route path="/reconciliation" element={<ReconciliationPage />} />
           <Route path="/payment-plan" element={<PaymentPlanPage />} />
         </Routes>

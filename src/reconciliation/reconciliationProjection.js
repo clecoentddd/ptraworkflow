@@ -48,7 +48,7 @@ export function isDecisionValidated(events) {
 
 export function buildReconciliationProjection(events) {
   const calculated = {}; // { month: { amount, calculationId, changeId } }
-  const paid = {};       // { month: amountPaid }
+  const paid = {};       // { month: totalPaid }
   let paymentPlanId = null;
 
   for (const e of events) {
@@ -63,14 +63,19 @@ export function buildReconciliationProjection(events) {
     }
     if (e.event === "PaymentPlanCreated") {
       paymentPlanId = e.paymentPlanId;
-      for (const pay of e.payload.payments) {
-        paid[pay.month] = pay.amountPaid;
-      }
+    }
+    // Sum all PaiementEffectué events per month
+    if (e.event === "PaiementEffectué") {
+      if (!paid[e.month]) paid[e.month] = 0;
+      paid[e.month] += Number(e.amount) || 0;
     }
   }
 
-  // Union of all months in either plan
-  const allMonths = Array.from(new Set([...Object.keys(calculated), ...Object.keys(paid)])).sort();
+  // Union of all months in calculation and all months paid
+  const allMonths = Array.from(new Set([
+    ...Object.keys(calculated),
+    ...Object.keys(paid)
+  ])).sort();
 
   return {
     calculated,

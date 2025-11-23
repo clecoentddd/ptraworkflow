@@ -50,11 +50,12 @@ export default function DroitsPeriodPage() {
   }
 
   return (
-    <div className="droits-page-container" style={{ maxWidth: 1100, margin: '40px auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
-      {/* Process Flow (now on top, no card) */}
-      <ProcessFlowStatusBar />
-      {/* Modification Form Card */}
-      <div className="event-stream-section" style={{ marginBottom: 0 }}>
+    <div className="workflow-main-container">
+      <section className="workflow-header">
+        <ProcessFlowStatusBar />
+      </section>
+      <section className="workflow-content">
+        <h2>Période de droits</h2>
         <div className="event-stream-title">Gestion de la période de droits</div>
         <UpdateDroitsPeriod
           events={eventLog}
@@ -64,9 +65,10 @@ export default function DroitsPeriodPage() {
           changeId={changeId}
         />
         {error && <div className="error" style={{ color: '#d32f2f', marginTop: 8 }}>{error}</div>}
-      </div>
-      {/* Event Stream Card */}
-      <EventStream events={eventLog} filter={e => e.event === 'PeriodesDroitsModifiees'} maxHeight={10000} />
+      </section>
+      <section className="workflow-event-stream">
+        <EventStream events={eventLog} filter={e => e.event === 'PeriodesDroitsModifiees'} maxHeight={10000} />
+      </section>
     </div>
   );
 }

@@ -80,12 +80,7 @@ function computeEntries() {
 			if (cancelled.has(e.changeId)) continue;
 			const { startMonth, endMonth } = e.payload || {};
 			if (!startMonth || !endMonth) continue;
-			// Only include if entry is within the droit period
-			if (!droitStart || !droitEnd) continue;
-			// entry must be fully within droit period
-			const entryStartOk = isMonthInRange(startMonth, droitStart, droitEnd);
-			const entryEndOk = isMonthInRange(endMonth, droitStart, droitEnd);
-			if (!(entryStartOk && entryEndOk)) continue;
+			// Show all added entries, regardless of droits period
 			for (const month of monthRange(startMonth, endMonth)) {
 				if (!byMonth[month]) byMonth[month] = [];
 				byMonth[month].push({ ...e.payload, entryId: e.entryId, changeId: e.changeId });

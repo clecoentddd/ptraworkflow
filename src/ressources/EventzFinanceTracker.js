@@ -143,96 +143,103 @@ const EventzFinanceTracker = () => {
   }
 
   return (
-    <div className="droits-page-container" style={{ maxWidth: 1100, margin: '40px auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
-  {/* Process Flow (now on top, no card) */}
-  <ProcessFlowStatusBar />
-
-      {/* Display latest droits period */}
-  <div style={{ margin: '8px 0 24px 0', padding: '8px', background: '#f7f7f7', borderRadius: 6 }}>
-        <b>Période de droits courante (depuis l&apos;event stream):</b>
-        {latestDroitsPeriod ? (
-          <span style={{ marginLeft: 8 }}>
-            {latestDroitsPeriod.startMonth} &rarr; {latestDroitsPeriod.endMonth} {latestDroitsPeriod.ts ? <span style={{ color: '#888', fontSize: 12 }}>({latestDroitsPeriod.ts.slice(0, 10)})</span> : null}
-          </span>
-        ) : (
-          <span style={{ marginLeft: 8 }}>Aucune période définie.</span>
-        )}
-      </div>
-
-      {/* Main Table/Form Card */}
-      <div className="event-stream-section" style={{marginBottom: 0}}>
-        <div className="event-stream-title">Ressources - Revenus / Dépenses (EventZ)</div>
-        <button onClick={handleQuery} style={{ float: 'right', marginBottom: 12, padding: '10px 24px', fontWeight: 600, borderRadius: 6, background: '#43a047', color: '#fff', border: 'none', fontSize: 16, cursor: 'pointer' }}>
-          {queryResult ? 'Fermer Projection' : 'Afficher Projection'}
-        </button>
-        {queryResult && (
-          <div style={{ margin: '12px 0', background: '#f6f6f6', padding: 16, borderRadius: 8, fontSize: 14, position: 'relative' }}>
-            <button onClick={handleQuery} style={{ position: 'absolute', top: 8, right: 8, background: '#e11d48', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}>Fermer</button>
-            <strong>Projection (raw):</strong>
-            <pre style={{ fontSize: 13, margin: 0 }}>
-              {typeof queryResult === 'string' ? queryResult : JSON.stringify(queryResult, null, 2)}
-            </pre>
+    <div className="workflow-main-container">
+      <section className="workflow-header">
+        <ProcessFlowStatusBar />
+      </section>
+      <section className="workflow-content">
+        <div className="event-stream-section" style={{ position: 'relative' }}>
+          <h2>Finance Tracker</h2>
+          <div style={{ margin: '8px 0 24px 0', padding: '8px', background: '#f7f7f7', borderRadius: 6 }}>
+            <b>Période de droits courante (depuis l&apos;event stream):</b>
+            {latestDroitsPeriod ? (
+              <span style={{ marginLeft: 8 }}>
+                {latestDroitsPeriod.startMonth} &rarr; {latestDroitsPeriod.endMonth} {latestDroitsPeriod.ts ? <span style={{ color: '#888', fontSize: 12 }}>({latestDroitsPeriod.ts.slice(0, 10)})</span> : null}
+              </span>
+            ) : (
+              <span style={{ marginLeft: 8 }}>Aucune période définie.</span>
+            )}
           </div>
-        )}
-        <div className="form-row">
-          <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} disabled={!isStep4Ouverte}>
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-          </select>
-          <select value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} disabled={!isStep4Ouverte}>
-            <option value="">Code</option>
-            {(form.type === 'income' ? incomeOptions : expenseOptions).map(o => (
-              <option key={o.code} value={o.code}>{o.code} - {o.label}</option>
-            ))}
-          </select>
-          <input type="number" placeholder="Amount" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} disabled={!isStep4Ouverte} />
-          <input type="month" placeholder="Start Month" value={form.startMonth} onChange={e => setForm({ ...form, startMonth: e.target.value })} disabled={!isStep4Ouverte} />
-          <input type="month" placeholder="End Month" value={form.endMonth} onChange={e => setForm({ ...form, endMonth: e.target.value })} disabled={!isStep4Ouverte} />
-          <button onClick={handleAdd} disabled={!isStep4Ouverte}>Add</button>
-        </div>
-        <table className="projection-table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Code</th>
-              <th>Label</th>
-              {allMonths.map(month => {
-                // Display as mm-yy
-                const [yyyy, mm] = month.split('-');
-                return <th key={month}>{mm}-{yyyy.slice(2)}</th>;
+          <div className="event-stream-title">Ressources - Revenus / Dépenses (EventZ)</div>
+          <button
+            className="projection-btn"
+            onClick={handleQuery}
+          >
+            {queryResult ? 'Fermer Projection' : 'Afficher Projection'}
+          </button>
+          {queryResult && (
+            <div className="projection-popup">
+              <button className="projection-close-btn" onClick={handleQuery}>
+                Fermer
+              </button>
+              <strong>Projection (raw):</strong>
+              <pre style={{ fontSize: 13, margin: 0, background: '#222', color: '#fff', padding: 16, borderRadius: 8 }}>
+                {typeof queryResult === 'string' ? queryResult : JSON.stringify(queryResult, null, 2)}
+              </pre>
+            </div>
+          )}
+          <div className="form-row">
+            <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} disabled={!isStep4Ouverte}>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+            <select value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} disabled={!isStep4Ouverte}>
+              <option value="">Code</option>
+              {(form.type === 'income' ? incomeOptions : expenseOptions).map(o => (
+                <option key={o.code} value={o.code}>{o.code} - {o.label}</option>
+              ))}
+            </select>
+            <input type="number" placeholder="Amount" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} disabled={!isStep4Ouverte} />
+            <input type="month" placeholder="Start Month" value={form.startMonth} onChange={e => setForm({ ...form, startMonth: e.target.value })} disabled={!isStep4Ouverte} />
+            <input type="month" placeholder="End Month" value={form.endMonth} onChange={e => setForm({ ...form, endMonth: e.target.value })} disabled={!isStep4Ouverte} />
+            <button onClick={handleAdd} disabled={!isStep4Ouverte}>Add</button>
+          </div>
+          <table className="projection-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Code</th>
+                <th>Label</th>
+                {allMonths.map(month => {
+                  // Display as mm-yy
+                  const [yyyy, mm] = month.split('-');
+                  return <th key={month}>{mm}-{yyyy.slice(2)}</th>;
+                })}
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEntries.map((row, idx) => {
+                // Find label from config for display
+                const option = [...incomeOptions, ...expenseOptions].find(o => o.code === row.code);
+                const label = option ? option.label : '';
+                return (
+                  <tr key={row.entryId}>
+                    <td style={{fontWeight:'bold'}}>{row.type}</td>
+                    <td>{row.code}</td>
+                    <td>{label}</td>
+                    {allMonths.map(month => {
+                      const covers = isMonthInRange(month, row.startMonth, row.endMonth);
+                      return <td key={month}>{covers ? row.amount : ''}</td>;
+                    })}
+                    <td>
+                      <button className="btn-delete" onClick={() => handleDelete(row.entryId)} disabled={!isStep4Ouverte}>Delete</button>
+                    </td>
+                  </tr>
+                );
               })}
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEntries.map((row, idx) => {
-              // Find label from config for display
-              const option = [...incomeOptions, ...expenseOptions].find(o => o.code === row.code);
-              const label = option ? option.label : '';
-              return (
-                <tr key={row.entryId}>
-                  <td style={{fontWeight:'bold'}}>{row.type}</td>
-                  <td>{row.code}</td>
-                  <td>{label}</td>
-                  {allMonths.map(month => {
-                    const covers = isMonthInRange(month, row.startMonth, row.endMonth);
-                    return <td key={month}>{covers ? row.amount : ''}</td>;
-                  })}
-                  <td>
-                    <button className="btn-delete" onClick={() => handleDelete(row.entryId)} disabled={!isStep4Ouverte}>Delete</button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Event Stream Card */}
-      <EventStream
-        events={eventLog.filter(e => e.event === 'EntryAdded' || e.event === 'EntryDeleted')}
-        maxHeight={260}
-      />
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section className="workflow-event-stream">
+        <EventStream
+          events={eventLog}
+          filter={e => e.event === 'EntryAdded' || e.event === 'EntryDeleted'}
+          maxHeight={400}
+          showTitle={true}
+        />
+      </section>
     </div>
   );
 };

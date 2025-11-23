@@ -25,17 +25,17 @@ function getFinanceProjectionForChangeId(events, eventLog, changeId, startMonth,
     sm++;
     if (sm > 12) { sm = 1; sy++; }
   }
-  // For each entry, only keep those with the current changeId
-  const filteredByChangeId = {};
+  // For each entry, keep all valid entries (added, not deleted) for the period, regardless of changeId
+  const filteredByMonth = {};
   for (const month of months) {
-    const entries = (entriesByMonth[month] || []).filter(e => e.changeId === changeId);
+    const entries = entriesByMonth[month] || [];
     if (entries.length > 0) {
-      filteredByChangeId[month] = entries;
+      filteredByMonth[month] = entries;
     }
   }
   console.log('[getFinanceProjectionForChangeId] months:', months);
-  console.log('[getFinanceProjectionForChangeId] filteredByChangeId:', filteredByChangeId);
-  return { months, filteredByChangeId };
+  console.log('[getFinanceProjectionForChangeId] filteredByMonth:', filteredByMonth);
+  return { months, filteredByMonth };
 }
 
 export default function PlanCalculPage() {
@@ -77,13 +77,13 @@ export default function PlanCalculPage() {
   const lastCalc = getLastCalculation(eventLog, changeId);
   const [message, setMessage] = useState('');
   // Get validated finance entries for this changeId and period
-  const { months, filteredByChangeId } = latestDroitsPeriod && changeId
+  const { months, filteredByMonth } = latestDroitsPeriod && changeId
     ? getFinanceProjectionForChangeId(eventLog, eventLog, changeId, latestDroitsPeriod.startMonth, latestDroitsPeriod.endMonth)
-    : { months: [], filteredByChangeId: {} };
+    : { months: [], filteredByMonth: {} };
   // For each entry (row), build a map of entryId to entry
   const entryMap = new Map();
   for (const month of months) {
-    for (const entry of filteredByChangeId[month] || []) {
+    for (const entry of (queryResult ? queryResult[month] : []) || []) {
       if (!entryMap.has(entry.entryId)) {
         entryMap.set(entry.entryId, { ...entry });
       }
@@ -96,7 +96,7 @@ export default function PlanCalculPage() {
     // For each month, sum all validated entries (income - expenses) for this changeId
     // Calculate raw amounts per month
     const rawRessources = months.map(month => {
-      const entries = filteredByChangeId[month] || [];
+  const entries = filteredByMonth[month] || [];
       let totalIncome = 0;
       let totalExpense = 0;
       for (const e of entries) {
@@ -126,14 +126,14 @@ export default function PlanCalculPage() {
   }
 
   return (
-  <div className="plan-de-calcul-main-container">
+    <div className="workflow-main-container">
       {/* Process Flow (now on top, no card) */}
       <ProcessFlowStatusBar />
 
-    {/* Plan de Calcul Container */}
-  <div className="event-stream-section">
+      {/* Plan de Calcul Container */}
+      <div className="event-stream-section" style={{ position: 'relative' }}>
         {/* Display latest calculation period */}
-  <div className="plan-de-calcul-period">
+        <div className="plan-de-calcul-period">
           <b>Période de calcul courante :</b>
           {latestDroitsPeriod ? (
             <span style={{ marginLeft: 8 }}>
@@ -144,7 +144,7 @@ export default function PlanCalculPage() {
           )}
         </div>
 
-  <div className="plan-de-calcul-actions">
+        <div className="plan-de-calcul-actions">
           <button
             onClick={handleCalculate}
             disabled={!canCalculate}
@@ -153,18 +153,20 @@ export default function PlanCalculPage() {
             Lancer le calcul mensuel (10%)
           </button>
           <button
+            className="projection-btn"
             onClick={handleQuery}
-            className="plan-de-calcul-proj-btn"
           >
             {queryResult ? 'Fermer Projection' : 'Afficher Projection'}
           </button>
           {message && <span className="plan-de-calcul-message">{message}</span>}
         </div>
         {queryResult && (
-          <div className="plan-de-calcul-projection">
-            <button onClick={handleQuery} className="plan-de-calcul-close-proj-btn">Fermer</button>
+          <div className="projection-popup">
+            <button className="projection-close-btn" onClick={handleQuery}>
+              Fermer
+            </button>
             <strong>Projection (raw):</strong>
-            <pre className="plan-de-calcul-projection-pre">
+            <pre style={{ fontSize: 13, margin: 0, background: '#222', color: '#fff', padding: 16, borderRadius: 8 }}>
               {typeof queryResult === 'string' ? queryResult : JSON.stringify(queryResult, null, 2)}
             </pre>
           </div>
@@ -183,48 +185,49 @@ export default function PlanCalculPage() {
                 </tr>
               </thead>
               <tbody>
-                  <tr className="plan-de-calcul-table-total-row">
-                    <td>Total Ressources/Dépenses</td>
-                    {months.map(month => {
-                      let total = 0;
-                      const entries = filteredByChangeId[month] || [];
-                      for (const e of entries) {
-                        if (e.type === 'income') total += Number(e.amount);
-                        if (e.type === 'expense') total -= Number(e.amount);
-                      }
-                      return <td key={month} className="plan-de-calcul-table-total-cell">{Number(total).toFixed(2)} €</td>;
-                    })}
-                  </tr>
-                  {uniqueEntries.map((row, idx) => {
-                    const label = row.label || row.code;
-                    return (
-                      <tr key={row.entryId} className={row.type === 'income' ? 'income-row' : 'expense-row'}>
-                        <td className="plan-de-calcul-table-entry-label">{label} <span className="plan-de-calcul-table-entry-type">({row.type})</span></td>
-                        {months.map(month => {
-                          const covers = month >= row.startMonth && month <= row.endMonth;
-                          return <td key={month}>{covers ? row.amount : ''}</td>;
-                        })}
-                      </tr>
-                    );
+                <tr className="plan-de-calcul-table-total-row">
+                  <td>Total Ressources/Dépenses</td>
+                  {months.map(month => {
+                    let total = 0;
+                    const entries = filteredByMonth[month] || [];
+                    for (const e of entries) {
+                      if (e.type === 'income') total += Number(e.amount);
+                      if (e.type === 'expense') total -= Number(e.amount);
+                    }
+                    return <td key={month} className="plan-de-calcul-table-total-cell">{Number(total).toFixed(2)} €</td>;
                   })}
-                  {lastCalc && (
-                    <tr className="plan-de-calcul-last-calc-row">
-                      <td>
-                        Dernier calcul enregistré<br />
-                        <span className="plan-de-calcul-last-calc-id">calculationId: {lastCalc.calculationId}</span>
-                      </td>
+                </tr>
+                {uniqueEntries.map((row, idx) => {
+                  const label = row.label || row.code;
+                  return (
+                    <tr key={row.entryId} className={row.type === 'income' ? 'income-row' : 'expense-row'}>
+                      <td className="plan-de-calcul-table-entry-label">{label} <span className="plan-de-calcul-table-entry-type">({row.type})</span></td>
                       {months.map(month => {
-                        // Use the calculated 10% value from PlanDeCalculEffectué event
-                        const planDeCalculEvent = eventLog.filter(e => e.event === 'PlanDeCalculEffectué' && e.changeId === lastCalc.changeId).slice(-1)[0];
-                        let value = '';
-                        if (planDeCalculEvent && planDeCalculEvent.payload && planDeCalculEvent.payload.ressources) {
-                          const found = planDeCalculEvent.payload.ressources.find(row => row.month === month);
-                          value = found ? `${Number(found.amount).toFixed(2)} €` : '';
-                        }
-                        return <td key={month}>{value}</td>;
+                        // Show entry amount only if this entry is present in filteredByMonth for this month
+                        const entry = (filteredByMonth[month] || []).find(e => e.entryId === row.entryId);
+                        return <td key={month}>{entry ? entry.amount : ''}</td>;
                       })}
                     </tr>
-                  )}
+                  );
+                })}
+                {lastCalc && (
+                  <tr className="plan-de-calcul-last-calc-row">
+                    <td>
+                      Dernier calcul enregistré<br />
+                      <span className="plan-de-calcul-last-calc-id">calculationId: {lastCalc.calculationId}</span>
+                    </td>
+                    {months.map(month => {
+                      // Use the calculated 10% value from PlanDeCalculEffectué event
+                      const planDeCalculEvent = eventLog.filter(e => e.event === 'PlanDeCalculEffectué' && e.changeId === lastCalc.changeId).slice(-1)[0];
+                      let value = '';
+                      if (planDeCalculEvent && planDeCalculEvent.payload && planDeCalculEvent.payload.ressources) {
+                        const found = planDeCalculEvent.payload.ressources.find(row => row.month === month);
+                        value = found ? `${Number(found.amount).toFixed(2)} €` : '';
+                      }
+                      return <td key={month}>{value}</td>;
+                    })}
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
