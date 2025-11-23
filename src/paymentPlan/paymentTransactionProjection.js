@@ -14,13 +14,22 @@ export function getPaymentTransactions(eventLog) {
         amount: e.amount,
         status: 'Demandé',
         history: [e],
+        reimbursed: false,
+        paid: false,
       };
     }
     if (e.event === 'PaiementEffectué' && transactions[e.transactionId]) {
-      transactions[e.transactionId].status = 'Effectué';
+      // If amount < 0, treat as reimbursement
+      if (e.amount < 0) {
+        transactions[e.transactionId].status = 'Remboursé';
+        transactions[e.transactionId].reimbursed = true;
+      } else {
+        transactions[e.transactionId].status = 'Effectué';
+        transactions[e.transactionId].paid = true;
+      }
       transactions[e.transactionId].history.push(e);
     }
   }
-  // Return as array
-  return Object.values(transactions);
+  // Reject duplicate transactions: only allow one 'Effectué' or 'Remboursé' per transactionId
+  return Object.values(transactions).filter(t => !(t.paid && t.reimbursed));
 }

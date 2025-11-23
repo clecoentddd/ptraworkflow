@@ -13,6 +13,7 @@ import { appendWorkflowEvents } from '../workflowEventLog';
 
 export default function PaymentPlanPage() {
   const [refresh, setRefresh] = useState(0);
+  const [popup, setPopup] = useState(null);
   const eventLog = readWorkflowEventLog();
   const paymentPlanProjection = getPaymentPlanState(eventLog);
   // Use planDeCalculId as fallback if paymentPlanId is null
@@ -31,6 +32,17 @@ export default function PaymentPlanPage() {
 
   // Handler for payment
   function handlePay(month, amount) {
+    if (amount < 0) {
+      console.log(`[Rembourser] Attempt for month: ${month}, amount: ${amount}`);
+    }
+    // Invariant check: block if already paid/reimbursed for this month
+    const transactionsForMonth = getPaymentTransactions(eventLog).filter(t => t.month === month && t.paymentPlanId === paymentPlan.paymentPlanId);
+    const alreadySettled = transactionsForMonth.some(t => t.status === 'Effectué' || t.status === 'Remboursé');
+    if (alreadySettled) {
+      setPopup(`Cette transaction pour le mois ${month} a déjà été effectuée.`);
+      console.log(`[Invariant] Transaction for month ${month} already settled.`);
+      return;
+    }
     // Always generate new UUIDs for transactionId and paymentPlanId
     let transactionId, newPaymentPlanId;
     if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
@@ -40,7 +52,10 @@ export default function PaymentPlanPage() {
       transactionId = require('uuid').v4();
       newPaymentPlanId = require('uuid').v4();
     }
+    // ...existing code...
     const dueDate = getLastDayOfMonth(month).toISOString();
+    // For reimbursement, use negative amount in PaiementEffectué
+    const isReimbursement = amount < 0;
     const demandeEvent = createPaiementDemandeEvent({
       transactionId,
       paymentPlanId: newPaymentPlanId,
@@ -48,13 +63,15 @@ export default function PaymentPlanPage() {
       dueDate,
       amount
     });
+    console.log(`[Rembourser] Appending PaiementDemandé event:`, demandeEvent);
     appendWorkflowEvents(demandeEvent);
     const effectueEvent = createPaiementEffectueEvent({
       transactionId,
       paymentPlanId: newPaymentPlanId,
       month,
-      amount
+      amount: isReimbursement ? amount : amount
     });
+    console.log(`[Rembourser] Appending PaiementEffectué event:`, effectueEvent);
     appendWorkflowEvents(effectueEvent);
     setTimeout(() => setRefresh(r => r + 1), 100); // force re-render after event
   }
@@ -77,8 +94,14 @@ export default function PaymentPlanPage() {
 
   return (
     <>
+      {popup && (
+        <div style={{ position: 'fixed', top: 40, left: '50%', transform: 'translateX(-50%)', background: '#fff', color: '#222', border: '1px solid #d32f2f', borderRadius: 8, padding: '16px 32px', zIndex: 9999, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+          <span>{popup}</span>
+          <button style={{ marginLeft: 24, background: '#d32f2f', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer' }} onClick={() => setPopup(null)}>Fermer</button>
+        </div>
+      )}
       <div className="workflow-main-container">
-        <ProcessFlowStatusBar />
+  <ProcessFlowStatusBar />
         <div className="event-stream-section" style={{ position: 'relative' }}>
           <h2>Payment Plan</h2>
           <div style={{ marginBottom: 18 }}>
@@ -133,26 +156,23 @@ export default function PaymentPlanPage() {
               {paymentPlan.payments.map(({ month, amount }) => {
                 // Only consider payment events after the latest payment plan timestamp
                 const planTs = new Date(paymentPlan.ts).getTime();
-                const paymentEvents = eventLog.filter(e =>
-                  (e.event === 'PaiementEffectué' || e.event === 'RemboursementEffectué') &&
-                  e.paymentPlanId === paymentPlan.paymentPlanId &&
-                  e.month === month &&
-                  new Date(e.ts).getTime() > planTs
-                );
+                // Aggregate all transactions for this month and plan
+                const transactionsForMonth = getPaymentTransactions(eventLog).filter(t => t.month === month && t.paymentPlanId === paymentPlan.paymentPlanId);
+                const alreadySettled = transactionsForMonth.some(t => t.status === 'Effectué' || t.status === 'Remboursé');
                 let actionLabel = '';
                 let showButton = false;
                 let buttonText = '';
-                if (paymentEvents.length > 0) {
-                  // Show 'Payé' or 'Remboursé' depending on event type
-                  const hasPaiement = paymentEvents.some(e => e.event === 'PaiementEffectué');
-                  const hasRemboursement = paymentEvents.some(e => e.event === 'RemboursementEffectué');
-                  if (hasPaiement && amount > 0) {
+                if (alreadySettled) {
+                  // Find the latest transaction for this month
+                  const latestTx = transactionsForMonth[transactionsForMonth.length - 1];
+                  if (latestTx && latestTx.status === 'Effectué' && amount > 0) {
                     actionLabel = 'Payé';
-                  } else if (hasRemboursement && amount < 0) {
+                  } else if (latestTx && latestTx.status === 'Remboursé' && amount < 0) {
                     actionLabel = 'Remboursé';
                   } else {
-                    actionLabel = 'Payé'; // fallback for any payment event
+                    actionLabel = 'Transaction effectuée';
                   }
+                  showButton = false;
                 } else if (amount > 0) {
                   actionLabel = `A payer (${amount})`;
                   showButton = true;
