@@ -37,8 +37,8 @@ export function useReconciliationValidation() {
       changeId,
       planDeCalculId: calculationId,
       paymentPlanId: paymentPlanId || null,
-      deltaPerMonth,
-      payments: paymentsPerMonth
+      droitsPeriod,
+      payload: reconciliationPayload // includes toPayOrReimburse per month
     });
     appendWorkflowEvents(event);
     return true;

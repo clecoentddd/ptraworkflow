@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import EventStream from '../components/EventStream';
-import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
-import '../planCalcul/PlanCalculPage.css';
-import { useReconciliationValidation } from './useReconciliationValidation';
-import { getStepState } from '../workflowProjections';
 import { readWorkflowEventLog } from '../workflowEventLog';
-import { getDeltaPerMonth } from './reconciliationProjection';
-
-// Filter DecisionValidee events for event stream
-const allEvents = readWorkflowEventLog();
-const decisionEvents = allEvents.filter(e => e.event === 'DecisionValidee');
+import { getStepState } from '../workflowProjections';
+import { useReconciliationValidation } from './useReconciliationValidation';
+import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
+import EventStream from '../components/EventStream';
 
 export default function ReconciliationPage() {
+  // Filter DecisionValidee events for event stream
+  const allEvents = readWorkflowEventLog();
+  const decisionEvents = allEvents.filter(e => e.event === 'DecisionValidee');
+
+  const [refresh, setRefresh] = useState(0);
   const {
     reconciliation,
     calculationId,
@@ -41,6 +40,12 @@ export default function ReconciliationPage() {
   const [showRaw, setShowRaw] = useState(false);
   const rawProjection = reconciliation;
 
+  // Wrap validate to force refresh
+  function handleValidate() {
+    validate();
+    setTimeout(() => setRefresh(r => r + 1), 100);
+  }
+
   return (
     <>
       <div className="workflow-main-container">
@@ -54,7 +59,7 @@ export default function ReconciliationPage() {
             <div style={{ marginTop: 12 }}>
               <button
                 className="btn btn-primary"
-                onClick={validate}
+                onClick={handleValidate}
                 disabled={alreadyValidated || step6State !== 'Ouverte' || !calculationId || !changeId}
               >
                 Valider Reconciliation
@@ -83,34 +88,34 @@ export default function ReconciliationPage() {
           </div>
           <div className="plan-calcul-main-section">
             <h3 style={{ marginBottom: 12 }}>Reconciliation Calcul / Paiement</h3>
-            <table className="plan-calcul-table">
+            <table className="plan-calcul-table" style={{ borderCollapse: 'collapse', width: '100%', marginTop: 12 }}>
               <thead>
-                <tr>
-                  <th>Mois</th>
-                  <th>Montant calculé</th>
-                  <th>Montant payé</th>
-                  <th>À payer / À rembourser</th>
+                <tr style={{ background: '#e9ecef' }}>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', minWidth: 90 }}>Mois</th>
+                  <th style={{ textAlign: 'right', padding: '8px 12px', minWidth: 120 }}>Montant calculé</th>
+                  <th style={{ textAlign: 'right', padding: '8px 12px', minWidth: 120 }}>Montant payé</th>
+                  <th style={{ textAlign: 'right', padding: '8px 12px', minWidth: 120 }}>À payer / À rembourser</th>
                 </tr>
               </thead>
               <tbody>
                 {(!reconciliation.payload || reconciliation.payload.length === 0) && (
-                  <tr><td colSpan={4} style={{ textAlign: 'center', color: '#888' }}>Aucun calcul ou paiement à rapprocher.</td></tr>
+                  <tr><td colSpan={4} style={{ textAlign: 'center', color: '#888', padding: '8px 12px' }}>Aucun calcul ou paiement à rapprocher.</td></tr>
                 )}
                 {reconciliation.payload && reconciliation.payload.map(row => (
                   <tr key={row.month}>
-                    <td>{row.month}</td>
-                    <td>{Number(row.calculatedAmount).toFixed(2)}</td>
-                    <td>{Number(row.amountPaid).toFixed(2)}</td>
-                    <td>{Number(row.toPayOrReimburse).toFixed(2)}</td>
+                    <td style={{ padding: '8px 12px', background: '#f7f7f7', fontWeight: 500 }}>{row.month}</td>
+                    <td style={{ textAlign: 'right', padding: '8px 12px' }}>{Number(row.calculatedAmount).toFixed(2)}</td>
+                    <td style={{ textAlign: 'right', padding: '8px 12px' }}>{Number(row.amountPaid).toFixed(2)}</td>
+                    <td style={{ textAlign: 'right', padding: '8px 12px' }}>{Number(row.toPayOrReimburse).toFixed(2)}</td>
                   </tr>
                 ))}
                 {/* Summary row: Total calculé and paid */}
                 {reconciliation.payload && reconciliation.payload.length > 0 && (
                   <tr style={{ fontWeight: 'bold', background: '#f5f5f5' }}>
-                    <td>Total calculé</td>
-                    <td>{reconciliation.payload.reduce((sum, r) => sum + r.calculatedAmount, 0).toFixed(2)} €</td>
-                    <td>{reconciliation.payload.reduce((sum, r) => sum + r.amountPaid, 0).toFixed(2)} €</td>
-                    <td></td>
+                    <td style={{ padding: '8px 12px' }}>Total</td>
+                    <td style={{ textAlign: 'right', padding: '8px 12px' }}>{reconciliation.payload.reduce((sum, r) => sum + r.calculatedAmount, 0).toFixed(2)} €</td>
+                    <td style={{ textAlign: 'right', padding: '8px 12px' }}>{reconciliation.payload.reduce((sum, r) => sum + r.amountPaid, 0).toFixed(2)} €</td>
+                    <td style={{ textAlign: 'right', padding: '8px 12px' }}>{reconciliation.payload.reduce((sum, r) => sum + r.toPayOrReimburse, 0).toFixed(2)} €</td>
                   </tr>
                 )}
               </tbody>

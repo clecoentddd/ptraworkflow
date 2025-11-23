@@ -23,18 +23,11 @@ export function automatePaymentPlanCreation(eventLog) {
     );
     if (alreadyExists) continue;
 
-    // Use payments from DecisionValidee payload if available, else fallback to deltaPerMonth
 
-    // Always use payments from DecisionValidee payload.payments if present and non-empty
+    // Extract month and toPayOrReimburse from DecisionValidee payload
     let payments = [];
-    if (
-      validatedDecision.payload &&
-      Array.isArray(validatedDecision.payload.payments) &&
-      validatedDecision.payload.payments.length > 0
-    ) {
-      payments = validatedDecision.payload.payments.map(p => ({ month: p.month, amount: p.amount }));
-    } else if (validatedDecision.payload && validatedDecision.payload.deltaPerMonth) {
-      payments = Object.entries(validatedDecision.payload.deltaPerMonth).map(([month, amount]) => ({ month, amount }));
+    if (validatedDecision.payload && Array.isArray(validatedDecision.payload)) {
+      payments = validatedDecision.payload.map(p => ({ month: p.month, amount: p.toPayOrReimburse }));
     }
 
     // Create auto-generated payment plan event, include decisionId
