@@ -6,7 +6,7 @@ import { getWorkflowStepsCached } from '../workflowProjections';
 import getDatesDuDroit from '../ressources/projections/getAllDroitsPeriods';
 import computeEntries, { QueryRessourceEntries } from '../ressources/projections/computeEntries';
 import { getLastCalculation } from './planCalculProjection';
-import { createCalculation } from './planCalculSlice';
+import { createCalculation } from './planCalculService';
 import { createPlanDeCalculEffectueEvent } from './event';
 import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
 import '../layout.css';
