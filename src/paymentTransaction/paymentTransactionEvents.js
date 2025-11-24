@@ -9,7 +9,7 @@ export function createPaiementDemandeCommand({ paymentPlanId, month, dueDate, am
     month,
     dueDate,
     amount,
-    ts: new Date().toISOString(),
+  timestamp: new Date().toISOString(),
   };
 }
 
@@ -21,7 +21,7 @@ export function createPaiementDemandeEvent({ transactionId, paymentPlanId, month
     month,
     dueDate,
     amount,
-    ts: new Date().toISOString(),
+  timestamp: new Date().toISOString(),
   };
 }
 
@@ -32,6 +32,6 @@ export function createPaiementEffectueEvent({ transactionId, paymentPlanId, mont
     paymentPlanId,
     month,
     amount,
-    ts: new Date().toISOString(),
+  timestamp: new Date().toISOString(),
   };
 }

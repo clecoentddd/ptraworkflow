@@ -34,7 +34,7 @@ export function appendWorkflowEvents(newEvents) {
   function appendAndRunF(evts, parentChangeId = null) {
     for (const e of evts) {
       // Propagate changeId from parent if not present
-      let stamped = { ...e, timestamp: e.timestamp || now };
+  let stamped = { ...e, timestamp: e.timestamp || now };
       if (parentChangeId && !stamped.changeId) {
         stamped.changeId = parentChangeId;
       }

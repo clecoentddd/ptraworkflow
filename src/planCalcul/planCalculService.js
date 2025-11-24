@@ -18,7 +18,7 @@ export function createCalculation({ changeId, startMonth, endMonth, ressources }
     startMonth,
     endMonth,
     monthly,
-    ts: new Date().toISOString(),
+  timestamp: new Date().toISOString(),
   };
 }
 

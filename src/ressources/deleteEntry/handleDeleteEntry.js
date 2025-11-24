@@ -9,7 +9,7 @@ export default function handleDeleteEntry(events, command) {
 	const last = [...events].reverse().find(e => e.entryId === command.entryId);
 	const changeId = last && last.changeId ? last.changeId : 'default';
 	return [{
-		ts: new Date().toISOString(),
+		timestamp: new Date().toISOString(),
 		event: 'EntryDeleted',
 		entryId: command.entryId,
 		changeId

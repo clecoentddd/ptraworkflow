@@ -9,7 +9,7 @@ function getDatesDuDroit(events) {
       return {
         startMonth: payload.startMonth || '',
         endMonth: payload.endMonth || '',
-        ts: e.ts || e.timestamp || '',
+  timestamp: e.timestamp || '',
         changeId: e.changeId || '',
       };
     });

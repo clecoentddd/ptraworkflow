@@ -4,7 +4,7 @@
 export function createEvent(type, payload = {}) {
   return {
     event: type,
-    timestamp: new Date().toISOString(),
+  timestamp: new Date().toISOString(),
     ...payload
   };
 }
@@ -14,7 +14,7 @@ export function normalizeEvent(e) {
   const { event, timestamp, ts, ...rest } = e;
   return {
     event,
-    timestamp: timestamp || ts || new Date().toISOString(),
+  timestamp: timestamp || new Date().toISOString(),
     ...rest
   };
 }

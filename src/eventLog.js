@@ -25,7 +25,7 @@ export function appendEvents(newEvents) {
   const now = new Date().toISOString();
   const events = readEventLog();
   const toAppend = Array.isArray(newEvents) ? newEvents : [newEvents];
-  const stamped = toAppend.map(e => ({ ...e, timestamp: e.timestamp || now }));
+  const stamped = toAppend.map(e => ({ ...e, timestamp: e.timestamp || now })); // already correct, but ensure all event creators use 'timestamp'
   const updated = events.concat(stamped);
   writeEventLog(updated);
   return stamped;

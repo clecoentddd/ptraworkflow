@@ -10,7 +10,7 @@ export default function handleUpdateDroitsPeriod(events, command) {
   const [ey, em] = endMonth.split('-').map(Number);
   if (sy > ey || (sy === ey && sm > em)) throw new Error('Start month must be before or equal to end month');
   return [{
-    ts: new Date().toISOString(),
+  timestamp: new Date().toISOString(),
     event: 'PeriodesDroitsModifiees',
     changeId,
     payload: { startMonth, endMonth }

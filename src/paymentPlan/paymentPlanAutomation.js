@@ -56,7 +56,7 @@ export function automatePaymentPlanCreation(eventLog) {
       event: 'StepOpened',
       workflowId,
       step: 7,
-      ts: new Date().toISOString(),
+  timestamp: new Date().toISOString(),
     };
     // Append StepOpened first, then payment plan event
     newEvents.push(stepOpenedEvent, paymentPlanEvent);

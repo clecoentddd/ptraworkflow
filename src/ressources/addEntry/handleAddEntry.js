@@ -21,7 +21,7 @@ export default function handleAddEntry(events, command) {
 	// Remove entryId and changeId from payload
 	const { entryId: _eid, changeId: _cid, ...payloadRest } = command.payload;
 	return [{
-		ts: new Date().toISOString(),
+		timestamp: new Date().toISOString(),
 		event: 'EntryAdded',
 		entryId,
 		changeId,

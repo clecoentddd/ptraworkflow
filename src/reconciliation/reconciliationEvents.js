@@ -13,6 +13,6 @@ export function createDecisionValideeEvent({ changeId, planDeCalculId, paymentPl
     paymentPlanId,
     droitsPeriod,
     payload, // full array with toPayOrReimburse per month
-    ts: new Date().toISOString()
+  timestamp: new Date().toISOString()
   };
 }
