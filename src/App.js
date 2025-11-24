@@ -9,20 +9,24 @@ import TodoWorkflow from './TodoWorkflow/TodoWorkflow';
 import PlanCalculPage from './planCalcul/PlanCalculPage';
 import ReconciliationPage from './reconciliation/ReconciliationPage';
 import './App.css';
+import { AuthButtons } from './auth/AuthButtons';
 
 function App() {
   return (
     <Router>
       <div className="App">
-        <nav style={{ padding: '16px', background: '#f0f0f0' }}>
-          <Link to="/" style={{ marginRight: '16px' }}>Process</Link>
-          <Link to="/droits" style={{ marginRight: '16px' }}>Droits</Link>
-          <Link to="/finance" style={{ marginRight: '16px' }}>Ressources</Link>
-          <Link to="/plan-calcul" style={{ marginRight: '16px' }}>Plan de Calcul</Link>
-          <Link to="/reconciliation" style={{ marginRight: '16px' }}>Reconciliation</Link>
-          <Link to="/payment-plan" style={{ marginRight: '16px' }}>Payment Plan</Link>
-          <Link to="/git">Comme Git</Link>
-          <Link to="/todos" style={{ marginRight: '16px' }}>Todo List</Link>
+        <nav style={{ padding: '16px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <Link to="/" style={{ marginRight: '16px' }}>Process</Link>
+            <Link to="/droits" style={{ marginRight: '16px' }}>Droits</Link>
+            <Link to="/finance" style={{ marginRight: '16px' }}>Ressources</Link>
+            <Link to="/plan-calcul" style={{ marginRight: '16px' }}>Plan de Calcul</Link>
+            <Link to="/reconciliation" style={{ marginRight: '16px' }}>Reconciliation</Link>
+            <Link to="/payment-plan" style={{ marginRight: '16px' }}>Payment Plan</Link>
+            <Link to="/git">Comme Git</Link>
+            <Link to="/todos" style={{ marginRight: '16px' }}>Todo List</Link>
+          </div>
+          <AuthButtons />
         </nav>
 
         <Routes>

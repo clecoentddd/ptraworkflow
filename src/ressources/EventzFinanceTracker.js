@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useAuthUser } from '../auth/AuthUserContext';
 import EventStream from '../components/EventStream';
 import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
 import { readWorkflowEventLog } from '../workflowEventLog';
@@ -15,6 +16,7 @@ import './FinanceTracker.css';
 import { incomeOptions, expenseOptions } from '../ressourceConfig';
 
 const EventzFinanceTracker = () => {
+  const { user } = useAuthUser();
   // Use only the canonical event log for all projections and UI
   const [, setEvents] = useState(readWorkflowEventLog());
   const [form, setForm] = useState({ type: 'income', code: '', amount: 0, startMonth: '', endMonth: '' });
@@ -119,7 +121,8 @@ const EventzFinanceTracker = () => {
       changeId
     });
     try {
-      const newEvents = handleAddEntry(eventLog, command);
+      const userEmail = user?.email || user?.name || 'anonymous';
+      const newEvents = handleAddEntry(eventLog, command, userEmail);
       const updated = [...eventLog, ...newEvents];
       setEvents(updated);
       // Write to canonical event log
@@ -132,7 +135,8 @@ const EventzFinanceTracker = () => {
   function handleDelete(entryId) {
     const command = DeleteEntryCommand(entryId);
     try {
-      const newEvents = handleDeleteEntry(eventLog, command);
+      const userEmail = user?.email || user?.name || 'anonymous';
+      const newEvents = handleDeleteEntry(eventLog, command, userEmail);
       const updated = [...eventLog, ...newEvents];
       setEvents(updated);
       // Write to canonical event log

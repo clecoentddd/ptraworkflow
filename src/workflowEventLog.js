@@ -73,8 +73,9 @@ export function clearWorkflowEventLog() {
   localStorage.removeItem(WORKFLOW_EVENT_LOG_KEY);
 }
 
-export default {
+const workflowEventLog = {
   readWorkflowEventLog,
   appendWorkflowEvents,
   clearWorkflowEventLog,
 };
+export default workflowEventLog;

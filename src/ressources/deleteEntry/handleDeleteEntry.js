@@ -1,7 +1,10 @@
 // CommandHandler: handleDeleteEntry
 // Emits EntryDeleted event
 
-export default function handleDeleteEntry(events, command) {
+export default function handleDeleteEntry(events, command, userEmail) {
+	if (!userEmail || userEmail === 'anonymous') {
+		throw new Error('You need to authenticate to delete an entry.');
+	}
 	// Check if entry exists
 	const exists = events.some(e => e.entryId === command.entryId && e.event !== 'EntryDeleted');
 	if (!exists) throw new Error('Entry does not exist');
@@ -12,6 +15,7 @@ export default function handleDeleteEntry(events, command) {
 		timestamp: new Date().toISOString(),
 		event: 'EntryDeleted',
 		entryId: command.entryId,
-		changeId
+		changeId,
+		userEmail: userEmail
 	}];
 }

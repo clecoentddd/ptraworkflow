@@ -37,8 +37,9 @@ export function clearEventLog() {
 }
 
 // Export for testing
-export default {
+const eventLog = {
   readEventLog,
   appendEvents,
   clearEventLog,
 };
+export default eventLog;

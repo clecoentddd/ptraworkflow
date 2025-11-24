@@ -8,9 +8,12 @@ function isMonthBeforeOrEqual(a, b) {
 	return ay < by || (ay === by && am <= bm);
 }
 
-export default function handleAddEntry(events, command) {
+export default function handleAddEntry(events, command, userEmail) {
 	const { startMonth, endMonth, changeId, entryId } = command.payload;
 	if (!changeId) throw new Error('changeId is required');
+	if (!userEmail || userEmail === 'anonymous') {
+		throw new Error('You need to authenticate to add an entry.');
+	}
 	// Find all cancelled changeIds
 	const cancelled = new Set(events.filter(e => e.event === 'ChangeCancelled').map(e => e.changeId));
 	// Check for duplicate entryId among non-cancelled entries
@@ -25,6 +28,7 @@ export default function handleAddEntry(events, command) {
 		event: 'EntryAdded',
 		entryId,
 		changeId,
+		userEmail: userEmail,
 		payload: { ...payloadRest }
 	}];
 }

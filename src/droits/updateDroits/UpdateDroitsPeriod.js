@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import computeDroitsPeriod from '../projections/computeDroitsPeriod';
 import UpdateDroitsPeriodCommand from './UpdateDroitsPeriodCommand';
-import EventStream from '../../components/EventStream';
+// ...existing code...
 
 
 export default function UpdateDroitsPeriod({

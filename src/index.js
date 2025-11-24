@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App'; // ✅ make sure this points to App.js
+import { AuthProvider } from './auth/AuthProvider';
 import reportWebVitals from './reportWebVitals';
 
 console.log("[index.js] Starting app...");
@@ -13,7 +14,9 @@ const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </React.StrictMode>
 );
 

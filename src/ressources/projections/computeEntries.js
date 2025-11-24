@@ -58,8 +58,6 @@ function computeEntries() {
 	const eventLog = readWorkflowEventLog();
 	const allDroitsPeriods = getDatesDuDroit(eventLog || []);
 	const latestDroitsPeriod = allDroitsPeriods.length > 0 ? allDroitsPeriods[allDroitsPeriods.length - 1] : null;
-	const droitStart = latestDroitsPeriod?.startMonth;
-	const droitEnd = latestDroitsPeriod?.endMonth;
 
 	console.log('[computeEntries] eventLog:', eventLog);
 	console.log('[computeEntries] latestDroitsPeriod:', latestDroitsPeriod);
