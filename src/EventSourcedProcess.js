@@ -1,8 +1,8 @@
-
-
 import { getReconciliationRows, getLatestPaymentPlanId } from './reconciliation/reconciliationQueries';
 import { createDecisionValideeEvent } from './reconciliation/reconciliationEvents';
 import { createRessourcesOpenedForChange } from './ressources/ressourceVersionEvents';
+import { canCancelMutation } from './mutation/AnnulerMutationSlice';
+import { createMutationAnnuleeEvent } from './mutation/mutationEvents';
 
 import React, { useState } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
@@ -32,6 +32,8 @@ function getChangeId(events) {
 
 export default function EventSourcedProcess() {
   // ...existing code...
+  // Remove Redux dispatch; use direct event log for cancellation
+
   // Initialize state and event log
   const [rerender, setRerender] = useState(0);
   const events = readWorkflowEventLog();
@@ -85,6 +87,8 @@ export default function EventSourcedProcess() {
   const changeId = getChangeId(events);
   const processCompleted = steps[7]?.state === 'Done';
   const [errorMessage] = useState(null);
+  // Check if current changeId is cancelled
+  const isChangeCancelled = changeId && events.some(e => e.changeId === changeId && e.event === 'MutationAnnulée');
 
 
 
@@ -204,6 +208,18 @@ export default function EventSourcedProcess() {
   }
 
 
+  function handleCancelMutation() {
+    if (!changeId || processCompleted) {
+      return;
+    }
+    const userEmail = (window?.authUser?.email) || 'anonymous';
+    // Use event creator for MutationAnnulée
+    appendWorkflowEvents(
+      createMutationAnnuleeEvent({ changeId, workflowId: WORKFLOW_ID, userEmail })
+    );
+    setRerender(x => x + 1);
+  }
+
   return (
     <div className="process-container">
       <h1 className="main-title">EventZ - Processus Prestations</h1>
@@ -211,15 +227,22 @@ export default function EventSourcedProcess() {
         <div className="panel">
           <div className="panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 className="panel-title">Process Flow</h2>
-            <button
-              onClick={startProcess}
-              disabled={changeId && !processCompleted}
-              className={
-                `btn ${changeId && !processCompleted ? 'btn-success' : 'btn-primary'}`
-              }
-            >
-              Créer Mutation
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={startProcess}
+                disabled={changeId && !processCompleted && !isChangeCancelled}
+                className={`btn ${(changeId && !processCompleted && !isChangeCancelled) ? 'btn-success' : 'btn-primary'}`}
+              >
+                Créer Mutation
+              </button>
+              <button
+                onClick={handleCancelMutation}
+                disabled={!changeId || processCompleted || !canCancelMutation(events, changeId)}
+                className="btn btn-danger"
+              >
+                Annuler Mutation
+              </button>
+            </div>
           </div>
           {errorMessage && <div className="error-message">{errorMessage}</div>}
           <div className="state-info">

@@ -7,9 +7,18 @@ import { readEventLog } from './eventLog';
 export function projectTodos(events) {
   // { [todoId]: { text, state, lastEvent, ... } }
   const todos = {};
+  // Track cancelled changeIds
+  const cancelledChangeIds = new Set();
   for (const e of events) {
-    const { todoId, event, text } = e;
+    if (e.event === 'MutationAnnulée' && e.changeId) {
+      cancelledChangeIds.add(e.changeId);
+    }
+  }
+  for (const e of events) {
+    const { todoId, event, text, changeId } = e;
     if (!todoId) continue;
+    // Exclude todos for cancelled changeIds
+    if (changeId && cancelledChangeIds.has(changeId)) continue;
     if (event === 'TodoAdded') {
       todos[todoId] = { todoId, text, state: 'active', lastEvent: e };
     } else if (event === 'TodoEdited' && todos[todoId] && todos[todoId].state !== 'deleted') {

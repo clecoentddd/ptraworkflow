@@ -5,17 +5,26 @@ import { readWorkflowEventLog } from './workflowEventLog';
 
 // Derive the current state of all steps for a workflow from the event log
 export function projectWorkflowSteps(events, workflowId) {
-  // Find the latest changeId for this workflow
+  // Find all cancelled changeIds for this workflow
+  const cancelledChangeIds = new Set();
+  for (const e of events) {
+    if (e.workflowId === workflowId && e.event === 'MutationAnnulée' && e.changeId) {
+      cancelledChangeIds.add(e.changeId);
+    }
+  }
+  // Find the latest non-cancelled changeId for this workflow
   let latestChangeId = null;
   for (let i = events.length - 1; i >= 0; i--) {
     const e = events[i];
-    if (e.workflowId === workflowId && e.changeId) {
+    if (e.workflowId === workflowId && e.changeId && !cancelledChangeIds.has(e.changeId)) {
       latestChangeId = e.changeId;
       break;
     }
   }
-  // Only consider events for the latest changeId, ignore events without changeId
-  const filtered = events.filter(e => e.workflowId === workflowId && e.changeId && e.changeId === latestChangeId);
+  // If no active changeId, return empty steps
+  if (!latestChangeId) return {};
+  // Only consider events for the latest non-cancelled changeId
+  const filtered = events.filter(e => e.workflowId === workflowId && e.changeId === latestChangeId);
   // { [step]: { state, lastEvent } }
   const steps = {};
   for (let i = 1; i <= 7; i++) {
