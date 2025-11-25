@@ -30,6 +30,9 @@ export function QueryRessourceEntries(startMonth, endMonth) {
 
 function monthRange(start, end) {
 	// start, end: 'YYYY-MM'
+	if (typeof start !== 'string' || typeof end !== 'string' || !/^\d{4}-\d{2}$/.test(start) || !/^\d{4}-\d{2}$/.test(end)) {
+		return [];
+	}
 	const result = [];
 	let [sy, sm] = start.split('-').map(Number);
 	const [ey, em] = end.split('-').map(Number);
@@ -42,7 +45,9 @@ function monthRange(start, end) {
 }
 
 function isMonthInRange(month, start, end) {
-	if (!month || !start || !end) return false;
+	// All must be strings in 'YYYY-MM' format
+	if (typeof month !== 'string' || typeof start !== 'string' || typeof end !== 'string') return false;
+	if (!/^\d{4}-\d{2}$/.test(month) || !/^\d{4}-\d{2}$/.test(start) || !/^\d{4}-\d{2}$/.test(end)) return false;
 	const [my, mm] = month.split('-').map(Number);
 	const [sy, sm] = start.split('-').map(Number);
 	const [ey, em] = end.split('-').map(Number);
@@ -78,6 +83,12 @@ function computeEntries(startMonth, endMonth) {
 	const legacyCancelled = new Set(eventLog.filter(e => e.event === 'ChangeCancelled').map(e => e.changeId));
 
 	const byMonth = {};
+	// Pre-populate all months in the requested period with empty arrays
+	if (startMonth && endMonth) {
+		for (const month of monthRange(startMonth, endMonth)) {
+			byMonth[month] = [];
+		}
+	}
 	for (const e of eventLog) {
 		if (e.event === 'EntryAdded') {
 			// Determine version id for this entry
