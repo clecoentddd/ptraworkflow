@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import computeDroitsPeriod from '../projections/computeDroitsPeriod';
+import getDatesDuDroit from '../../ressources/projections/getAllDroitsPeriods';
 import UpdateDroitsPeriodCommand from './UpdateDroitsPeriodCommand';
 // ...existing code...
 
@@ -14,7 +15,10 @@ export default function UpdateDroitsPeriod({
   eventLog,
   changeId
 }) {
-  const current = computeDroitsPeriod(events);
+  // Use eventz-compliant projection
+  const periods = getDatesDuDroit(events);
+  // Always use the latest droits period from the projection
+  const current = periods.length > 0 ? periods[periods.length - 1] : { startMonth: '', endMonth: '' };
   const [startMonth, setStartMonth] = useState(current.startMonth || '');
   const [endMonth, setEndMonth] = useState(current.endMonth || '');
   const [error, setError] = useState('');

@@ -5,8 +5,10 @@ import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
 import EventStream from '../components/EventStream';
 import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
 import { getWorkflowStepsCached } from '../workflowProjections';
+import getDatesDuDroit from '../ressources/projections/getAllDroitsPeriods';
 
 export default function DroitsPeriodPage() {
+    const [showProjection, setShowProjection] = useState(false);
   const [, setRerender] = useState(0);
   const eventLog = readWorkflowEventLog() || [];
   const steps = getWorkflowStepsCached('main-workflow');
@@ -55,6 +57,21 @@ export default function DroitsPeriodPage() {
         <ProcessFlowStatusBar />
       </section>
       <section className="workflow-content">
+                <button
+                  className="projection-btn"
+                  style={{ marginBottom: 12 }}
+                  onClick={() => setShowProjection(s => !s)}
+                >
+                  {showProjection ? 'Masquer Projection' : 'Afficher Projection'}
+                </button>
+                {showProjection && (
+                  <div className="projection-popup" style={{ background: '#222', color: '#fff', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+                    <strong>Projection (droits periods):</strong>
+                    <pre style={{ fontSize: 13, margin: 0 }}>
+                      {JSON.stringify(getDatesDuDroit(eventLog), null, 2)}
+                    </pre>
+                  </div>
+                )}
         <h2>Période de droits</h2>
         <div className="event-stream-title">Gestion de la période de droits</div>
         <UpdateDroitsPeriod

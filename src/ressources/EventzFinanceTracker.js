@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuthUser } from '../auth/AuthUserContext';
 import EventStream from '../components/EventStream';
@@ -24,16 +23,16 @@ const EventzFinanceTracker = () => {
   const eventLog = readWorkflowEventLog();
   // Get workflow steps for gating
   const steps = getWorkflowStepsCached('main-workflow');
-  // Get the latest droits period from event stream
+  // Define isStep4Ouverte for form controls
+  const isStep4Ouverte = steps[4]?.state === 'Ouverte';
+  // Get the latest non-cancelled droits period from event stream
   const allDroitsPeriods = getDatesDuDroit(eventLog);
   const latestDroitsPeriod = allDroitsPeriods.length > 0 ? allDroitsPeriods[allDroitsPeriods.length - 1] : null;
-  // Helper: is write mode allowed?
-  // Removed unused changeId variable
-  // Editability is gated by step 4 being 'Ouverte'
-  const isStep4Ouverte = steps[4]?.state === 'Ouverte';
-
-  // Projection: entries grouped by month (filtered by droit period)
-  const entriesByMonth = computeEntries();
+  // Use the canonical projection for the latest droits period
+  let entriesByMonth = {};
+  if (latestDroitsPeriod) {
+    entriesByMonth = QueryRessourceEntries(latestDroitsPeriod.startMonth, latestDroitsPeriod.endMonth);
+  }
   const allMonths = Object.keys(entriesByMonth).sort();
 
   // State for raw query result
@@ -52,6 +51,7 @@ const EventzFinanceTracker = () => {
     setQueryResult(byMonth);
   }
   // Build a map of entryId to entry (unique entries)
+  // Use all entries from the projection for the table
   const entryMap = new Map();
   for (const month of allMonths) {
     for (const entry of entriesByMonth[month]) {
@@ -60,9 +60,7 @@ const EventzFinanceTracker = () => {
       }
     }
   }
-  const uniqueEntries = Array.from(entryMap.values());
-  // Show all entries in the table (no filter by type)
-  const filteredEntries = uniqueEntries;
+  const filteredEntries = Array.from(entryMap.values());
 
   // Helper: check if a month is in the entry's range
   function isMonthInRange(month, start, end) {
@@ -87,7 +85,7 @@ const EventzFinanceTracker = () => {
       alert('Start month must be before or equal to end month.');
       return;
     }
-    // Check if the selected period is within the latest droits period
+    // Restrict entry addition to the current droits period
     if (!latestDroitsPeriod || !latestDroitsPeriod.startMonth || !latestDroitsPeriod.endMonth) {
       alert('No droits period defined.');
       return;

@@ -22,13 +22,11 @@ export function QueryRessourceEntries(startMonth, endMonth) {
 	if (!period) {
 		return {};
 	}
-	// Filter eventLog to only include events up to the end of the selected period (optional, for strictness)
-	// For now, just use the canonical event log in computeEntries
-	return computeEntries();
+	// Return only entries for the selected period
+	return computeEntries(startMonth, endMonth);
 }
 // Projection: compute entries grouped by month from event stream
-// Usage: computeEntries(events) => { [month]: [entries] }
-
+// Usage: computeEntries(startMonth, endMonth) => { [month]: [entries] }
 
 function monthRange(start, end) {
 	// start, end: 'YYYY-MM'
@@ -53,11 +51,11 @@ function isMonthInRange(month, start, end) {
 	return true;
 }
 
-function computeEntries() {
+function computeEntries(startMonth, endMonth) {
 	// Always use the canonical workflow event log
 	const eventLog = readWorkflowEventLog();
-	const allDroitsPeriods = getDatesDuDroit(eventLog || []);
-	const latestDroitsPeriod = allDroitsPeriods.length > 0 ? allDroitsPeriods[allDroitsPeriods.length - 1] : null;
+	// Find all cancelled changeIds (eventz compliant)
+	const cancelledChangeIds = new Set(eventLog.filter(e => e.event === 'MutationAnnulée' && e.changeId).map(e => e.changeId));
 
 	// Track resource versioning events
 	const openedVersions = {};
@@ -84,11 +82,14 @@ function computeEntries() {
 		if (e.event === 'EntryAdded') {
 			// Determine version id for this entry
 			const versionId = openedVersions[e.changeId];
-			// Ignore if cancelled (new or legacy)
-			if ((versionId && cancelledVersions.has(versionId)) || legacyCancelled.has(e.changeId)) continue;
-			const { startMonth, endMonth } = e.payload || {};
-			if (!startMonth || !endMonth) continue;
-			for (const month of monthRange(startMonth, endMonth)) {
+			// Ignore if cancelled (eventz, new or legacy)
+			if (cancelledChangeIds.has(e.changeId) || (versionId && cancelledVersions.has(versionId)) || legacyCancelled.has(e.changeId)) continue;
+			const entryStart = e.payload?.startMonth;
+			const entryEnd = e.payload?.endMonth;
+			if (!entryStart || !entryEnd) continue;
+			for (const month of monthRange(entryStart, entryEnd)) {
+				// Only include months within the requested droits period
+				if (startMonth && endMonth && !isMonthInRange(month, startMonth, endMonth)) continue;
 				if (!byMonth[month]) byMonth[month] = [];
 				byMonth[month].push({ ...e.payload, entryId: e.entryId, changeId: e.changeId, ressourceVersionId: versionId });
 			}
