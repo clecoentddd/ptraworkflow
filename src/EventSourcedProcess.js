@@ -2,6 +2,7 @@
 
 import { getReconciliationRows, getLatestPaymentPlanId } from './reconciliation/reconciliationQueries';
 import { createDecisionValideeEvent } from './reconciliation/reconciliationEvents';
+import { createRessourcesOpenedForChange } from './ressources/ressourceVersionEvents';
 
 import React, { useState } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
@@ -95,6 +96,22 @@ export default function EventSourcedProcess() {
       alert('Vous ne pouvez plus modifier les ressources après validation du plan de calcul (étape 4).');
       return;
     }
+    // When opening step 4, also emit RessourcesOpenedForChange
+    if (event === 'StepOpened' && step === 4) {
+      // Emit StepOpened as usual
+      appendWorkflowEvents({
+        event,
+        workflowId: WORKFLOW_ID,
+        step,
+        changeId,
+      });
+      // Emit RessourcesOpenedForChange with new ressourceVersionId
+      const userEmail = (window?.authUser?.email) || 'anonymous';
+      const resEvent = createRessourcesOpenedForChange({ changeId, userEmail });
+      appendWorkflowEvents(resEvent);
+      setRerender(x => x + 1);
+      return;
+    }
     appendWorkflowEvents({
       event,
       workflowId: WORKFLOW_ID,
@@ -109,13 +126,15 @@ export default function EventSourcedProcess() {
      -------------------------- */
 
     function startProcess() {
-      // Start a new workflow: only open step 1 with a new changeId
+      // Start a new workflow: create mutation with a new changeId
       const newChangeId = uuidv4();
+      const userEmail = (window?.authUser?.email) || 'anonymous';
       appendWorkflowEvents({
-        event: 'StepOpened',
+        event: 'MutationChangeCreated',
         workflowId: WORKFLOW_ID,
-        step: 1,
-        changeId: newChangeId
+        changeId: newChangeId,
+        timestamp: new Date().toISOString(),
+        userEmail
       });
       setRerender(x => x + 1);
     }
@@ -190,8 +209,17 @@ export default function EventSourcedProcess() {
       <h1 className="main-title">EventZ - Processus Prestations</h1>
       <div className="content-grid">
         <div className="panel">
-          <div className="panel-header">
+          <div className="panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 className="panel-title">Process Flow</h2>
+            <button
+              onClick={startProcess}
+              disabled={changeId && !processCompleted}
+              className={
+                `btn ${changeId && !processCompleted ? 'btn-success' : 'btn-primary'}`
+              }
+            >
+              Créer Mutation
+            </button>
           </div>
           {errorMessage && <div className="error-message">{errorMessage}</div>}
           <div className="state-info">
@@ -228,7 +256,6 @@ export default function EventSourcedProcess() {
             })}
           </div>
           <div className="controls">
-            <button onClick={startProcess} disabled={changeId && !processCompleted} className="btn btn-success">Start</button>
             <button onClick={runNextStep} disabled={processCompleted || !changeId} className="btn btn-primary">
               <Play size={16} /> <span>Run Next Step</span>
             </button>
@@ -237,7 +264,7 @@ export default function EventSourcedProcess() {
             </button>
             {/* show this only when a flow has ended */}
             {processCompleted && !changeId && (
-              <button onClick={startNewMutation} className="btn btn-success">Start New Mutation</button>
+              <button onClick={startNewMutation} className="btn btn-success">Créer Mutation</button>
             )}
           </div>
           {processCompleted && (

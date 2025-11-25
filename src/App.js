@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import EventSourcedProcess from './EventSourcedProcess';
 import EventzFinanceTracker from './ressources/EventzFinanceTracker';
@@ -12,6 +13,23 @@ import './App.css';
 import { AuthButtons } from './auth/AuthButtons';
 
 function App() {
+  const { isAuthenticated, user, isLoading, getAccessTokenSilently } = useAuth0();
+
+  useEffect(() => {
+    console.log('[Auth0] isAuthenticated:', isAuthenticated);
+    console.log('[Auth0] user:', user);
+    console.log('[Auth0] isLoading:', isLoading);
+    if (!isAuthenticated && !isLoading) {
+      getAccessTokenSilently()
+        .then(token => {
+          console.log('[Auth0] Silent authentication token:', token);
+        })
+        .catch(err => {
+          console.log('[Auth0] Silent authentication failed:', err);
+        });
+    }
+  }, [isAuthenticated, isLoading, user, getAccessTokenSilently]);
+
   return (
     <Router>
       <div className="App">

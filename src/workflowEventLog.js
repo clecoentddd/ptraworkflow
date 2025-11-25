@@ -1,5 +1,6 @@
 import workflowF from './workflowRules';
 import { automatePaymentPlanCreation } from './paymentPlan/paymentPlanAutomation';
+import { paymentTransactionF } from './paymentTransaction/paymentTransactionF';
 
 // workflowEventLog.js
 // EventZ Workflow Checklist: Event Log implementation
@@ -34,7 +35,7 @@ export function appendWorkflowEvents(newEvents) {
   function appendAndRunF(evts, parentChangeId = null) {
     for (const e of evts) {
       // Propagate changeId from parent if not present
-  let stamped = { ...e, timestamp: e.timestamp || now };
+      let stamped = { ...e, timestamp: e.timestamp || now };
       if (parentChangeId && !stamped.changeId) {
         stamped.changeId = parentChangeId;
       }
@@ -46,6 +47,19 @@ export function appendWorkflowEvents(newEvents) {
           stamped.paymentPlanId = require('uuid').v4();
         }
       }
+
+      // Payment transaction F: enforce only one PaiementEffectué per transactionId
+      let paymentFEvents = [];
+      if (stamped.event === 'PaiementEffectué') {
+        paymentFEvents = paymentTransactionF(events, stamped);
+        if (paymentFEvents && paymentFEvents.length > 0) {
+          // If rejected, do not append the payment event, only the rejection
+          events = events.concat(paymentFEvents);
+          allStamped.push(...paymentFEvents);
+          continue;
+        }
+      }
+
       events = events.concat([stamped]);
       allStamped.push(stamped);
       // Run F(Y, e) and append any resulting events recursively

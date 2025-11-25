@@ -1,0 +1,133 @@
+.plan-ids-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 18px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.plan-id-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+.plan-id-label {
+  font-weight: 600;
+  color: #2d7ef7;
+}
+.plan-id-value {
+  font-family: monospace;
+  color: #334155;
+  background: #e0e7ef;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.workflow-table th {
+  background: #f4f4f4;
+  font-weight: 600;
+}
+.workflow-table th:nth-child(3) {
+  width: 180px;
+  text-align: left;
+}
+.workflow-table td:nth-child(3) {
+  font-family: monospace;
+  font-size: 1em;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workflow-table td {
+  vertical-align: middle;
+}
+.plan-de-calcul-calc-btn {
+  background: #2d7ef7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.plan-de-calcul-calc-btn:hover {
+  background: #1a5fc2;
+}
+.plan-de-calcul-calc-btn:active {
+  background: #174a8c;
+}
+.workflow-table {
+  margin-top: 1rem;
+  width: 100%;
+  border-collapse: collapse;
+}
+.workflow-table th, .workflow-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+.workflow-table th {
+  background: #f4f4f4;
+}
+.projection-btn {
+  background: #2d7ef7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+.projection-popup {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #d32f2f;
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.projection-close-btn {
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+/* Payment popup styles extracted from PaymentPlanPage.js */
+.payment-popup {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #222;
+  border: 2px solid #43a047; /* default, overridden inline for color */
+  border-radius: 8px;
+  padding: 16px 32px;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+}
+.payment-popup-message {
+  font-weight: 600;
+  margin-right: 24px;
+}
+.payment-popup-close-btn {
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: 500;
+}

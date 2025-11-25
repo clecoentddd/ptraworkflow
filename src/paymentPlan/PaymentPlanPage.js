@@ -1,213 +1,163 @@
-
 // PaymentPlanPage.js
 // Displays the current payment plan using event-sourced projections
 import React, { useState } from 'react';
+import { useAuthUser } from '../auth/AuthUserContext';
 import '../layout.css';
+import './PaymentPlanPage.css';
 import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
-import { readWorkflowEventLog } from '../workflowEventLog';
+import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
 import { getPaymentPlanState } from './paymentPlanProjection';
 import EventStream from '../components/EventStream';
-import { getPaymentTransactions } from './paymentTransactionProjection';
-import { createPaiementDemandeEvent, createPaiementEffectueEvent } from './paymentTransactionSlice';
-import { appendWorkflowEvents } from '../workflowEventLog';
+import { getPaymentTransactions } from '../paymentTransaction/paymentTransactionProjection';
+import { createPaiementDemandeEvent } from '../paymentTransaction/paymentTransactionSlice';
+import { handlePay } from '../paymentTransaction/handlePay';
 
 export default function PaymentPlanPage() {
+  const { user, isAuthenticated, isLoading } = useAuthUser();
   const [refresh, setRefresh] = useState(0);
   const [popup, setPopup] = useState(null);
-  const eventLog = readWorkflowEventLog();
-  const paymentPlanProjection = getPaymentPlanState(eventLog);
-  // Use planDeCalculId as fallback if paymentPlanId is null
-  const paymentPlan = paymentPlanProjection ? {
-    ...paymentPlanProjection,
-    paymentPlanId: paymentPlanProjection.paymentPlanId || paymentPlanProjection.planDeCalculId
-  } : null;
-  // Transaction state is now event-sourced
   const [showProjection, setShowProjection] = useState(false);
+
+  const eventLog = readWorkflowEventLog();
+
+  if (!isAuthenticated && !isLoading) {
+    return (
+      <div style={{ color: 'red', padding: '2rem', fontWeight: 'bold', background: '#fff0f0' }}>
+        You must be authenticated to view the payment plan.
+      </div>
+    );
+  }
+
+  const paymentPlanProjection = getPaymentPlanState(eventLog);
+
+  const paymentPlan = paymentPlanProjection
+    ? {
+        ...paymentPlanProjection,
+        paymentPlanId:
+          paymentPlanProjection.paymentPlanId ||
+          paymentPlanProjection.planDeCalculId
+      }
+    : null;
 
   // Helper: get last day of month
   function getLastDayOfMonth(monthStr) {
     const [yyyy, mm] = monthStr.split('-').map(Number);
-    return new Date(yyyy, mm, 0); // day 0 of next month = last day of month
+    return new Date(yyyy, mm, 0); // last day of month
   }
 
-  // Handler for payment
-  function handlePay(month, amount) {
-    if (amount < 0) {
-      console.log(`[Rembourser] Attempt for month: ${month}, amount: ${amount}`);
-    }
-    // Invariant check: block if already paid/reimbursed for this month
-    const transactionsForMonth = getPaymentTransactions(eventLog).filter(t => t.month === month && t.paymentPlanId === paymentPlan.paymentPlanId);
-    const alreadySettled = transactionsForMonth.some(t => t.status === 'Effectué' || t.status === 'Remboursé');
-    if (alreadySettled) {
-      setPopup(`Cette transaction pour le mois ${month} a déjà été effectuée.`);
-      console.log(`[Invariant] Transaction for month ${month} already settled.`);
-      return;
-    }
-    // Always generate new UUIDs for transactionId and paymentPlanId
-    let transactionId, newPaymentPlanId;
-    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
-      transactionId = window.crypto.randomUUID();
-      newPaymentPlanId = window.crypto.randomUUID();
-    } else {
-      transactionId = require('uuid').v4();
-      newPaymentPlanId = require('uuid').v4();
-    }
-    // ...existing code...
-    const dueDate = getLastDayOfMonth(month).toISOString();
-    // For reimbursement, use negative amount in PaiementEffectué
-    const isReimbursement = amount < 0;
-    const demandeEvent = createPaiementDemandeEvent({
-      transactionId,
-      paymentPlanId: newPaymentPlanId,
-      month,
-      dueDate,
-      amount
-    });
-    console.log(`[Rembourser] Appending PaiementDemandé event:`, demandeEvent);
-    appendWorkflowEvents(demandeEvent);
-    const effectueEvent = createPaiementEffectueEvent({
-      transactionId,
-      paymentPlanId: newPaymentPlanId,
-      month,
-      amount: isReimbursement ? amount : amount
-    });
-    console.log(`[Rembourser] Appending PaiementEffectué event:`, effectueEvent);
-    appendWorkflowEvents(effectueEvent);
-    setTimeout(() => setRefresh(r => r + 1), 100); // force re-render after event
-  }
 
-  const today = new Date();
-  const transactions = getPaymentTransactions(eventLog).filter(t => t.paymentPlanId === paymentPlan.paymentPlanId);
-
-  // EventStream filter: show all events of type 'PaiementEffectué'
-  const eventStreamFilter = e => e.event === 'PaiementEffectué';
 
   if (!paymentPlan) {
-    return (
-      <div>No payment plan available.</div>
-    );
+    return <div>No payment plan available.</div>;
   }
+
+  const eventStreamFilter = e =>
+    e.event === 'PaiementDemandé' || e.event === 'PaiementEffectué' || e.event === 'PaiementRejected';
 
   return (
     <>
       {popup && (
-        <div style={{ position: 'fixed', top: 40, left: '50%', transform: 'translateX(-50%)', background: '#fff', color: '#222', border: '1px solid #d32f2f', borderRadius: 8, padding: '16px 32px', zIndex: 9999, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-          <span>{popup}</span>
-          <button style={{ marginLeft: 24, background: '#d32f2f', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer' }} onClick={() => setPopup(null)}>Fermer</button>
+        <div className="payment-popup" style={{ borderColor: popup.color }}>
+          <span className="payment-popup-message" style={{ color: popup.color }}>
+            {popup.message}
+          </span>
+          <button
+            className="payment-popup-close-btn"
+            style={{ background: popup.color }}
+            onClick={() => setPopup(null)}
+          >
+            Fermer
+          </button>
         </div>
       )}
+
       <div className="workflow-main-container">
-  <ProcessFlowStatusBar />
+        <ProcessFlowStatusBar />
+
         <div className="event-stream-section" style={{ position: 'relative' }}>
           <h2>Payment Plan</h2>
-          <div style={{ marginBottom: 18 }}>
-            <strong>Change ID:</strong> {paymentPlan.changeId}<br />
-            <strong>Plan de Calcul ID:</strong> {paymentPlan.planDeCalculId}<br />
-            <strong>Payment Plan ID:</strong> {paymentPlan.paymentPlanId}<br />
-            <strong>Type:</strong> {paymentPlan.isAutoGenerated ? 'Auto-generated (created by automation)' : 'Manual (created by user)'}
+
+          <div className="plan-ids-bar">
+            <div className="plan-id-row"><span className="plan-id-label">Change ID:</span> <span className="plan-id-value">{paymentPlan.changeId}</span></div>
+            <div className="plan-id-row"><span className="plan-id-label">Plan de Calcul ID:</span> <span className="plan-id-value">{paymentPlan.planDeCalculId}</span></div>
+            <div className="plan-id-row"><span className="plan-id-label">Payment Plan ID:</span> <span className="plan-id-value">{paymentPlan.paymentPlanId}</span></div>
+            <div className="plan-id-row"><span className="plan-id-label">Type:</span> <span className="plan-id-value">{paymentPlan.isAutoGenerated ? 'Auto-generated (created by automation)' : 'Manual (created by user)'}</span></div>
           </div>
+
           <button
             className="projection-btn"
             onClick={() => setShowProjection(s => !s)}
           >
             {showProjection ? 'Masquer Projection' : 'Afficher Projection'}
           </button>
+
           {showProjection && (
             <div className="projection-popup">
-              <button className="projection-close-btn" onClick={() => setShowProjection(false)}>
+              <button
+                className="projection-close-btn"
+                onClick={() => setShowProjection(false)}
+              >
                 Fermer
               </button>
-              <pre style={{ background: '#222', color: '#fff', padding: 16, borderRadius: 8, fontSize: 13, marginBottom: 18 }}>
+              <pre className="projection-pre">
                 {JSON.stringify(paymentPlanProjection, null, 2)}
               </pre>
             </div>
           )}
 
-          <style>{`
-            .plan-de-calcul-calc-btn {
-              background: #2d7ef7;
-              color: #fff;
-              border: none;
-              border-radius: 4px;
-              padding: 6px 16px;
-              cursor: pointer;
-              transition: background 0.2s;
-            }
-            .plan-de-calcul-calc-btn:hover {
-              background: #1a5fc2;
-            }
-            .plan-de-calcul-calc-btn:active {
-              background: #174a8c;
-            }
-          `}</style>
           <table className="workflow-table" style={{ marginTop: '1rem' }}>
             <thead>
               <tr>
                 <th>Month</th>
                 <th>Amount</th>
+                <th style={{ width: '180px' }}>Transaction ID</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {paymentPlan.payments.map(({ month, amount }) => {
-                // Only consider payment events after the latest payment plan timestamp
-                const planTs = new Date(paymentPlan.ts).getTime();
-                // Aggregate all transactions for this month and plan
-                const transactionsForMonth = getPaymentTransactions(eventLog).filter(t => t.month === month && t.paymentPlanId === paymentPlan.paymentPlanId);
-                const alreadySettled = transactionsForMonth.some(t => t.status === 'Effectué' || t.status === 'Remboursé');
-                let actionLabel = '';
-                let showButton = false;
-                let buttonText = '';
-                if (alreadySettled) {
-                  // Find the latest transaction for this month
-                  const latestTx = transactionsForMonth[transactionsForMonth.length - 1];
-                  if (latestTx && latestTx.status === 'Effectué' && amount > 0) {
-                    actionLabel = 'Payé';
-                  } else if (latestTx && latestTx.status === 'Remboursé' && amount < 0) {
-                    actionLabel = 'Remboursé';
-                  } else {
-                    actionLabel = 'Transaction effectuée';
-                  }
-                  showButton = false;
-                } else if (amount > 0) {
-                  actionLabel = `A payer (${amount})`;
-                  showButton = true;
-                  buttonText = 'Payer';
-                } else if (amount < 0) {
-                  actionLabel = `À rembourser (${Math.abs(amount)})`;
-                  showButton = true;
-                  buttonText = 'Rembourser';
-                } else {
-                  actionLabel = 'Rien à faire';
-                }
-                // Only allow payment/reimbursement for months prior to the current month
-                const [year, mon] = month.split('-').map(Number);
-                const now = new Date();
-                const currentYear = now.getFullYear();
-                const currentMonth = now.getMonth() + 1; // JS months are 0-based
-                const isPastMonth = (year < currentYear) || (year === currentYear && mon < currentMonth);
+              {paymentPlan.payments.map(({ month, amount, transactionId }) => {
+                const transactionsForMonth = getPaymentTransactions(eventLog).filter(
+                  t =>
+                    t.month === month &&
+                    t.paymentPlanId === paymentPlan.paymentPlanId
+                );
+                const paidTx = transactionsForMonth.find(t => t.status === 'Effectué' || t.status === 'Remboursé');
+                const alreadySettled = !!paidTx;
                 return (
                   <tr key={month}>
                     <td>{month}</td>
-                    <td>{amount}</td>
+                    <td>{Number(amount).toFixed(2)}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '1em', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transactionId?.slice(0, 8)}…</td>
                     <td>
-                      {showButton && isPastMonth ? (
-                        <button onClick={() => handlePay(month, amount)} className="plan-de-calcul-calc-btn">{buttonText}</button>
-                      ) : actionLabel}
+                      {alreadySettled ? (
+                        <span style={{ color: 'green', fontWeight: 'bold' }}>
+                          Transaction Effectué<br />
+                          <span style={{ fontWeight: 'normal', fontSize: '0.95em' }}>
+                            le {paidTx.timestamp?.slice(0, 10)} à {paidTx.timestamp?.slice(11, 19)}
+                          </span>
+                        </span>
+                      ) : (
+                        <button
+                          className="plan-de-calcul-calc-btn"
+                          onClick={() => handlePay({ user, paymentPlan, eventLog, appendWorkflowEvents, setPopup, setRefresh }, month, amount)}
+                        >
+                          Pay
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+
+          <EventStream
+            events={eventLog}
+            filter={eventStreamFilter}
+            maxHeight={400}
+            showTitle={true}
+          />
         </div>
-        {/* EventStream outside the main container */}
-        <EventStream
-          events={eventLog}
-          filter={eventStreamFilter}
-          maxHeight={400}
-          showTitle={true}
-        />
       </div>
     </>
   );

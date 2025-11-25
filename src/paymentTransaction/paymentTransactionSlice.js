@@ -1,8 +1,11 @@
-// Payment Transaction Events and Command Creators
+// Payment Transaction Slice for EventZ
+// Handles payment actions and events (PaiementDemandé, PaiementEffectué)
+
 import { v4 as uuidv4 } from 'uuid';
 
 
 
+// Event: PaiementDemandé
 export function createPaiementDemandeEvent({ transactionId, paymentPlanId, month, dueDate, amount }) {
   return {
     event: 'PaiementDemandé',
@@ -11,10 +14,11 @@ export function createPaiementDemandeEvent({ transactionId, paymentPlanId, month
     month,
     dueDate,
     amount,
-  timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString(),
   };
 }
 
+// Event: PaiementEffectué
 export function createPaiementEffectueEvent({ transactionId, paymentPlanId, month, amount }) {
   return {
     event: 'PaiementEffectué',
@@ -22,6 +26,6 @@ export function createPaiementEffectueEvent({ transactionId, paymentPlanId, mont
     paymentPlanId,
     month,
     amount,
-  timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString(),
   };
 }

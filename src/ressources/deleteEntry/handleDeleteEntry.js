@@ -11,11 +11,17 @@ export default function handleDeleteEntry(events, command, userEmail) {
 	// Try to get changeId from the last event for this entry
 	const last = [...events].reverse().find(e => e.entryId === command.entryId);
 	const changeId = last && last.changeId ? last.changeId : 'default';
+	// Find ressourceVersionId for this changeId
+	const ressourceVersionId = (() => {
+		const opened = events.find(e => e.event === 'RessourcesOpenedForChange' && e.changeId === changeId);
+		return opened ? opened.ressourceVersionId : null;
+	})();
 	return [{
 		timestamp: new Date().toISOString(),
 		event: 'EntryDeleted',
 		entryId: command.entryId,
 		changeId,
+		ressourceVersionId,
 		userEmail: userEmail
 	}];
 }

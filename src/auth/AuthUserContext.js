@@ -6,6 +6,7 @@ const AuthUserContext = createContext(null);
 
 export const AuthUserProvider = ({ children }) => {
   const { user, isAuthenticated, isLoading } = useAuth0();
+
   return (
     <AuthUserContext.Provider value={{ user, isAuthenticated, isLoading }}>
       {children}

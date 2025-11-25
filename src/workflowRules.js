@@ -1,6 +1,7 @@
 // workflowRules.js
 // EventZ F function for workflow checklist: enforces business rules and emits additional events as needed
 import { projectWorkflowSteps } from './workflowProjections';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * F(Y, newEvent): Given the full event log Y and a new event, returns zero or more new events to append.
@@ -12,8 +13,48 @@ export function workflowF(Y, newEvent) {
   if (!workflowId) return emitted;
   const steps = projectWorkflowSteps(Y, workflowId);
 
-  // Auto-open next step when a step is Done or Skipped (steps 1-5)
-  if ((event === 'StepDone' || event === 'StepSkipped') && step >= 1 && step <= 5) {
+  // Emit RessourcesOpenedForChange when step 4 is opened
+  if (event === 'StepOpened' && step === 4) {
+    emitted.push({
+      event: 'RessourcesOpenedForChange',
+      ressourceVersionId: uuidv4(),
+      changeId: newEvent.changeId,
+      workflowId,
+      timestamp: new Date().toISOString(),
+      userEmail: (window?.authUser?.email) || 'anonymous'
+    });
+  }
+
+  // Emit RessourcesClosedForChange when step 4 is validated (StepDone)
+  if (event === 'StepDone' && step === 4) {
+    // Find the ressourceVersionId for this changeId
+    const opened = Y.find(e => e.event === 'RessourcesOpenedForChange' && e.changeId === newEvent.changeId);
+    const ressourceVersionId = opened ? opened.ressourceVersionId : null;
+    if (ressourceVersionId) {
+      emitted.push({
+        event: 'RessourcesClosedForChange',
+        ressourceVersionId,
+        changeId: newEvent.changeId,
+        workflowId,
+        timestamp: new Date().toISOString(),
+        userEmail: (window?.authUser?.email) || 'anonymous'
+      });
+    }
+  }
+
+  // When a mutation is created, open step 2 (not step 1)
+  if (event === 'MutationChangeCreated') {
+    if (steps[2] && steps[2].state === 'ToDo') {
+      emitted.push({
+        event: 'StepOpened',
+        workflowId,
+        step: 2,
+      });
+    }
+  }
+
+  // Auto-open next step when a step is Done or Skipped (steps 2-5)
+  if ((event === 'StepDone' || event === 'StepSkipped') && step >= 2 && step <= 5) {
     const nextStep = step + 1;
     if (steps[nextStep] && steps[nextStep].state === 'ToDo') {
       emitted.push({
@@ -48,5 +89,4 @@ export function workflowF(Y, newEvent) {
 
   return emitted;
 }
-
 export default workflowF;

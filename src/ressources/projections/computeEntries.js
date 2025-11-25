@@ -59,29 +59,38 @@ function computeEntries() {
 	const allDroitsPeriods = getDatesDuDroit(eventLog || []);
 	const latestDroitsPeriod = allDroitsPeriods.length > 0 ? allDroitsPeriods[allDroitsPeriods.length - 1] : null;
 
-	console.log('[computeEntries] eventLog:', eventLog);
-	console.log('[computeEntries] latestDroitsPeriod:', latestDroitsPeriod);
-	const entryAddedEvents = eventLog.filter(e => e.event === 'EntryAdded');
-	console.log('[computeEntries] EntryAdded events:', entryAddedEvents.map(e => ({
-	  entryId: e.entryId,
-	  changeId: e.changeId,
-	  startMonth: e.payload?.startMonth,
-	  endMonth: e.payload?.endMonth,
-	  payload: e.payload
-	})));
+	// Track resource versioning events
+	const openedVersions = {};
+	const closedVersions = new Set();
+	const cancelledVersions = new Set();
+
+	for (const e of eventLog) {
+		if (e.event === 'RessourcesOpenedForChange') {
+			openedVersions[e.changeId] = e.ressourceVersionId;
+		}
+		if (e.event === 'RessourcesClosedForChange') {
+			closedVersions.add(e.ressourceVersionId);
+		}
+		if (e.event === 'RessourcesCancelled') {
+			cancelledVersions.add(e.ressourceVersionId);
+		}
+	}
+
+	// Find all cancelled changeIds (legacy)
+	const legacyCancelled = new Set(eventLog.filter(e => e.event === 'ChangeCancelled').map(e => e.changeId));
 
 	const byMonth = {};
-	// Find all cancelled changeIds
-	const cancelled = new Set(eventLog.filter(e => e.event === 'ChangeCancelled').map(e => e.changeId));
 	for (const e of eventLog) {
 		if (e.event === 'EntryAdded') {
-			if (cancelled.has(e.changeId)) continue;
+			// Determine version id for this entry
+			const versionId = openedVersions[e.changeId];
+			// Ignore if cancelled (new or legacy)
+			if ((versionId && cancelledVersions.has(versionId)) || legacyCancelled.has(e.changeId)) continue;
 			const { startMonth, endMonth } = e.payload || {};
 			if (!startMonth || !endMonth) continue;
-			// Show all added entries, regardless of droits period
 			for (const month of monthRange(startMonth, endMonth)) {
 				if (!byMonth[month]) byMonth[month] = [];
-				byMonth[month].push({ ...e.payload, entryId: e.entryId, changeId: e.changeId });
+				byMonth[month].push({ ...e.payload, entryId: e.entryId, changeId: e.changeId, ressourceVersionId: versionId });
 			}
 		}
 		if (e.event === 'EntryDeleted') {
@@ -97,7 +106,6 @@ function computeEntries() {
 			}
 		}
 	}
-	console.log('[computeEntries] byMonth:', byMonth);
 	return byMonth;
 }
 
