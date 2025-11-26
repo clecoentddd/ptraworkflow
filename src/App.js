@@ -30,25 +30,27 @@ function App() {
     }
   }, [isAuthenticated, isLoading, user, getAccessTokenSilently]);
 
+  const RessourcesMutationWorkflow = require('./RessourcesMutationWorkflow/RessourcesMutationWorkflow').default;
   return (
     <Router>
       <div className="App">
         <nav style={{ padding: '16px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <Link to="/" style={{ marginRight: '16px' }}>Process</Link>
+            <Link to="/mutation" style={{ marginRight: '16px' }}>Mutation de Ressources</Link>
             <Link to="/droits" style={{ marginRight: '16px' }}>Droits</Link>
             <Link to="/finance" style={{ marginRight: '16px' }}>Ressources</Link>
             <Link to="/plan-calcul" style={{ marginRight: '16px' }}>Plan de Calcul</Link>
             <Link to="/reconciliation" style={{ marginRight: '16px' }}>Reconciliation</Link>
             <Link to="/payment-plan" style={{ marginRight: '16px' }}>Payment Plan</Link>
             <Link to="/git">Comme Git</Link>
-
           </div>
           <AuthButtons />
         </nav>
 
         <Routes>
           <Route path="/" element={<EventSourcedProcess />} />
+          <Route path="/mutation" element={<RessourcesMutationWorkflow />} />
           <Route path="/finance" element={<EventzFinanceTracker />} />
           <Route path="/droits" element={<DroitsPeriodPage />} />
           <Route path="/plan-calcul" element={<PlanCalculPage />} />
