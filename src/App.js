@@ -42,7 +42,7 @@ function App() {
             <Link to="/reconciliation" style={{ marginRight: '16px' }}>Reconciliation</Link>
             <Link to="/payment-plan" style={{ marginRight: '16px' }}>Payment Plan</Link>
             <Link to="/git">Comme Git</Link>
-            <Link to="/todos" style={{ marginRight: '16px' }}>Todo List</Link>
+
           </div>
           <AuthButtons />
         </nav>

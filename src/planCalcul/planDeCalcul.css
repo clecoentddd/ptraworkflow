@@ -1,3 +1,17 @@
+.plan-de-calcul-last-calc-row .plan-de-calcul-result-cell {
+  font-size: 15px !important;
+  font-family: inherit;
+  color: inherit;
+  font-weight: 600;
+}
+/* Ensure consistent font for Plan de calcul result cells */
+.plan-de-calcul-result-cell {
+  font-family: inherit;
+  font-size: 15px;
+  color: inherit;
+  font-weight: 400;
+  padding: 6px 8px;
+}
 /* Projection box and close button styles */
 .plan-de-calcul-projection {
   position: relative;

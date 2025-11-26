@@ -210,8 +210,23 @@ export default function PlanCalculPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {uniqueEntries.map(entry => (
-                      <tr key={entry.entryId}>
+                    {/* Group incomes */}
+                    <tr><td colSpan={3} style={{fontWeight:'bold', background:'#e8f5e9'}}>Revenus</td>{months.map(month => <td key={month} style={{background:'#e8f5e9'}}></td>)}</tr>
+                    {uniqueEntries.filter(entry => entry.type === 'income').map(entry => (
+                      <tr key={entry.entryId} className="income-row">
+                        <td>{entry.code}</td>
+                        <td>{entry.label}</td>
+                        <td>{entry.type}</td>
+                        {months.map(month => {
+                          const found = (projection[month] || []).find(e => e.entryId === entry.entryId);
+                          return <td key={month}>{found ? Number(found.amount).toFixed(2) + ' €' : ''}</td>;
+                        })}
+                      </tr>
+                    ))}
+                    {/* Group expenses */}
+                    <tr><td colSpan={3} style={{fontWeight:'bold', background:'#ffebee'}}>Dépenses</td>{months.map(month => <td key={month} style={{background:'#ffebee'}}></td>)}</tr>
+                    {uniqueEntries.filter(entry => entry.type === 'expense').map(entry => (
+                      <tr key={entry.entryId} className="expense-row">
                         <td>{entry.code}</td>
                         <td>{entry.label}</td>
                         <td>{entry.type}</td>
@@ -225,7 +240,7 @@ export default function PlanCalculPage() {
                       <td colSpan={3}><b>Plan de calcul (résultat)</b></td>
                       {months.map(month => {
                         const value = planDeCalculByMonth[month];
-                        return <td key={month}>{value !== undefined ? Number(value).toFixed(2) + ' €' : ''}</td>;
+                        return <td key={month} className="plan-de-calcul-result-cell">{value !== undefined ? Number(value).toFixed(2) + ' €' : ''}</td>;
                       })}
                     </tr>
                   </tbody>

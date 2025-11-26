@@ -52,10 +52,10 @@ export default function ReconciliationPage() {
         <ProcessFlowStatusBar />
         <div className="event-stream-section" style={{ position: 'relative' }}>
           <div style={{ margin: '8px 0 16px 0', padding: '8px', background: '#f7f7f7', borderRadius: 6 }}>
-            <div><b>Dernier PaymentPlanId :</b> <span style={{ marginLeft: 8 }}>{reconciliation.paymentPlanId || <span style={{ color: '#888' }}>Aucun plan de paiement</span>}</span></div>
-            <div><b>PlanDeCalculId :</b> <span style={{ marginLeft: 8 }}>{reconciliation.planDeCalculId || <span style={{ color: '#888' }}>Aucun</span>}</span></div>
-            <div><b>ChangeId :</b> <span style={{ marginLeft: 8 }}>{reconciliation.changeId || <span style={{ color: '#888' }}>Aucun</span>}</span></div>
-            <div><b>Période de droits :</b> <span style={{ marginLeft: 8 }}>{reconciliation.droitsPeriod ? `${reconciliation.droitsPeriod.startMonth} à ${reconciliation.droitsPeriod.endMonth}` : <span style={{ color: '#888' }}>Aucune</span>}</span></div>
+            <div style={{ marginBottom: '8px' }}><b>ChangeId :</b> <span style={{ marginLeft: 8 }}>{reconciliation.changeId || <span style={{ color: '#888' }}>Aucun</span>}</span></div>
+            <div style={{ marginBottom: '8px' }}><b>Période de droits :</b> <span style={{ marginLeft: 8 }}>{reconciliation.droitsPeriod ? `${reconciliation.droitsPeriod.startMonth} à ${reconciliation.droitsPeriod.endMonth}` : <span style={{ color: '#888' }}>Aucune</span>}</span></div>
+            <div style={{ marginBottom: '8px' }}><b>PlanDeCalculId :</b> <span style={{ marginLeft: 8 }}>{reconciliation.planDeCalculId || <span style={{ color: '#888' }}>Aucun</span>}</span></div>
+            <div style={{ marginBottom: '8px' }}><b>Dernier PaymentPlanId :</b> <span style={{ marginLeft: 8 }}>{reconciliation.paymentPlanId || <span style={{ color: '#888' }}>Aucun plan de paiement</span>}</span></div>
             <div style={{ marginTop: 12 }}>
               <button
                 className="btn btn-primary"

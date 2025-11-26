@@ -1,17 +1,19 @@
 import React, { useState, useMemo } from "react";
 import "./CommeGit.css";
+import { readWorkflowEventLog } from "./workflowEventLog";
 
 const CommeGit = () => {
-  const [events] = useState(() => {
-    const saved = localStorage.getItem("eventSourcedProcessEvents");
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Use workflow event log for all events
+  const [events] = useState(() => readWorkflowEventLog());
 
   // Group events by ChangeId and order by timestamp descending
   const grouped = useMemo(() => {
     const map = {};
+    // Only include events with changeId and exclude pure workflow steps (StepOpened, StepDone, StepSkipped, StepCancelled)
     events.forEach(e => {
       if (!e.changeId) return;
+      // Exclude pure workflow step events
+      if (["StepOpened", "StepDone", "StepSkipped", "StepCancelled"].includes(e.event)) return;
       if (!map[e.changeId]) map[e.changeId] = [];
       map[e.changeId].push(e);
     });
@@ -44,67 +46,36 @@ const CommeGit = () => {
 
   return (
     <div className="commegit-container">
-      <h1>Comme Git (Event Stream Tree)</h1>
-      <div className="git-tree">
-        {Object.entries(grouped).map(([changeId, evts]) => {
-          const annulled = evts.some(e => e.type === "OperationMutationAnnulée");
+      <h1 style={{marginBottom: 18}}>Comme Git – Graph</h1>
+      <div className="git-tree-graph">
+        {Object.entries(grouped).map(([changeId, evts], idx) => {
+          const annulled = evts.some(e => e.event === "MutationAnnulée" || e.event === "OperationMutationAnnulée");
+          const validated = evts.some(e => e.event === "DecisionValidee");
+          let statusLabel = annulled ? "Annulée" : validated ? "Validée" : "En cours";
+          let statusClass = annulled ? "annulled" : validated ? "validated" : "inprogress";
+
+          // Dot color by status
+          const dotColor = statusClass === 'validated' ? '#2c974b' : statusClass === 'annulled' ? '#c00' : '#1976d2';
           return (
-            <div key={changeId} className={`git-branch ${annulled ? "inactive" : ""}`}>
-              <div className="git-node" onClick={() => toggle(changeId)}>
-                <span className="dot"></span>
-                <span className="icon">{expanded[changeId] ? "▼" : "▶"}</span>
-                <span className="label">ChangeId: {changeId}</span>
-                <span className="meta">
-                  ({evts.length} events){annulled && " - Annulée"}
-                </span>
+            <div key={changeId} className={`git-branch-tree ${statusClass}`}> 
+              <div className="git-branch-header">
+                <span className="git-branch-dot" style={{background: dotColor, boxShadow: `0 0 0 2px ${dotColor}33`}}></span>
+                <span className="git-branch-connector"></span>
+                <span className="git-branch-label">{changeId}</span>
+                <span className={`status-label ${statusClass}`}>{statusLabel}</span>
+                <button className="git-expand-btn" style={{marginLeft: 10, fontWeight: 'bold', fontSize: 18, background: '#f0f0f0', border: 'none', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', color: dotColor, cursor: 'pointer'}} onClick={() => toggle(changeId)}>{expanded[changeId] ? "−" : "+"}</button>
               </div>
-
               {expanded[changeId] && (
-                <div className="git-children">
-                  {evts.map(event => {
-                    const stepKey = `${changeId}-step${event.stepId}`;
-                    const isStep4 = event.stepId === 4 && (event.type === 'StepStarted' || event.type === 'StepCompleted');
-
-                    return (
-                      <div key={event.id} className="git-node" onClick={() => isStep4 && toggle(stepKey)}>
-                        <span className="dot small"></span>
-                        {isStep4 && <span className="icon">{expanded[stepKey] ? "▼" : "▶"}</span>}
-                        <span className="label">
-                          {event.stepId ? `Step ${event.stepId} – ` : ""}{event.type}
-                        </span>
-
-                        {/* Step 4 expansion → show ResourceAdded / ResourceRemoved */}
-                        {isStep4 && expanded[stepKey] && (
-                          <div className="git-children">
-                            {(() => {
-                              const startSeq = event.sequenceNumber;
-                              const endSeqEvent = evts.find(
-                                e => e.stepId === 4 && e.type === 'StepCompleted' && e.sequenceNumber > startSeq
-                              );
-                              const endSeq = endSeqEvent ? endSeqEvent.sequenceNumber : Infinity;
-
-                              const step4Resources = evts.filter(
-                                e =>
-                                  e.stepId === 4 &&
-                                  (e.type === 'ResourceAdded' || e.type === 'ResourceRemoved') &&
-                                  e.sequenceNumber > startSeq &&
-                                  e.sequenceNumber < endSeq
-                              );
-
-                              return step4Resources.map(resEvt => (
-                                <div key={resEvt.id} className="git-node resource-node">
-                                  <span className="dot tiny"></span>
-                                  <span className="label">
-                                    {resEvt.type} → {JSON.stringify(resEvt.data)}
-                                  </span>
-                                </div>
-                              ));
-                            })()}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="git-event-list">
+                  {evts.map(event => (
+                    <div key={event.id || event.sequenceNumber} className="git-event-node">
+                      <span className="git-event-dot" style={{background: dotColor, boxShadow: `0 0 0 2px ${dotColor}33`}}></span>
+                      <span className="git-event-connector"></span>
+                      <span className="git-event-label">{event.event}{event.stepId ? ` (Step ${event.stepId})` : ""}</span>
+                      {event.data && <span className="git-event-meta">{JSON.stringify(event.data)}</span>}
+                    </div>
+                  ))}
+                  {evts.length === 0 && <div style={{color: '#888'}}>Aucun événement métier pour cette version.</div>}
                 </div>
               )}
             </div>
