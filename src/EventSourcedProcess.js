@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import './EventSourcedProcess.css';
 import EventStream from './components/EventStream';
 import { appendWorkflowEvents, readWorkflowEventLog, clearWorkflowEventLog } from './workflowEventLog';
+import { getOverallStatus } from './RessourcesMutationWorkflow/projections';
 import { getWorkflowStepsCached } from './workflowProjections';
 
 
@@ -37,6 +38,7 @@ export default function EventSourcedProcess() {
   // Initialize state and event log
   const [rerender, setRerender] = useState(0);
   const events = readWorkflowEventLog();
+  const overallStatus = getOverallStatus(events);
   // Always use the latest projection, not the cached version
   const { projectWorkflowSteps } = require('./workflowProjections');
   const steps = projectWorkflowSteps(events, WORKFLOW_ID);
@@ -46,6 +48,7 @@ export default function EventSourcedProcess() {
   const step7Events = events.filter(e => e.step === 7);
   console.log('Step 7 events:', step7Events);
   console.log('Event log:', events);
+  console.log('Overall Status:', overallStatus);
   // Step 6: Validate reconciliation and append DecisionValidee event
   function validateReconciliation() {
     // Only allow if step 6 is Ouverte
@@ -87,8 +90,9 @@ export default function EventSourcedProcess() {
   const changeId = getChangeId(events);
   const processCompleted = steps[7]?.state === 'Done';
   const [errorMessage] = useState(null);
-  // Check if current changeId is cancelled
-  const isChangeCancelled = changeId && events.some(e => e.changeId === changeId && e.event === 'MutationAnnulée');
+  // Use overallStatus for mutation status
+  const hasOpenMutation = overallStatus.hasOpenMutation;
+  const latestDroitsPeriod = overallStatus.latestDroitsPeriod;
 
 
 
@@ -230,8 +234,8 @@ export default function EventSourcedProcess() {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={startProcess}
-                disabled={changeId && !processCompleted && !isChangeCancelled}
-                className={`btn ${(changeId && !processCompleted && !isChangeCancelled) ? 'btn-success' : 'btn-primary'}`}
+                disabled={hasOpenMutation || !latestDroitsPeriod}
+                className={`btn ${hasOpenMutation || !latestDroitsPeriod ? 'btn-success' : 'btn-primary'}`}
               >
                 Créer Mutation
               </button>
@@ -247,6 +251,8 @@ export default function EventSourcedProcess() {
           {errorMessage && <div className="error-message">{errorMessage}</div>}
           <div className="state-info">
             <div>Current ChangeId: {changeId || 'None'}</div>
+            <div>Dernière période de droits: {latestDroitsPeriod ? `${latestDroitsPeriod.startMonth} à ${latestDroitsPeriod.endMonth}` : 'Aucune'}</div>
+            <div>Statut mutation: {hasOpenMutation ? 'Ouverte' : 'Aucune mutation ouverte'}</div>
           </div>
           <div className="steps-container">
             {processSteps.map(step => {
