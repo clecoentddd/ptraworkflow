@@ -1,6 +1,9 @@
 // CreerMutationSlice.js
 // Vertical slice: creation logic and MutationChangeCreated event
 
+import { v4 as uuidv4 } from 'uuid';
+import { createMutationChangeCreatedEvent } from './events/MutationChangeCreatedEvent';
+
 // F function: checks if a mutation can be created
 export function canCreateMutation(eventLog) {
   // Only allow creation if no mutation is in progress (not completed or cancelled)
@@ -16,13 +19,4 @@ export function canCreateMutation(eventLog) {
   return !mutationInProgress;
 }
 
-// Event creator for mutation creation
-export function createMutationChangeCreatedEvent({ changeId, workflowId, userEmail }) {
-  return {
-    event: 'MutationChangeCreated',
-    workflowId,
-    changeId,
-    timestamp: new Date().toISOString(),
-    userEmail,
-  };
-}
+// Event creator for mutation creation is now imported from events/MutationChangeCreatedEvent.js

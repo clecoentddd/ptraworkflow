@@ -1,6 +1,8 @@
 // AnnulerMutationSlice.js
 // Vertical slice: cancellation logic and MutationAnnulée event
 
+import { createMutationAnnuleeEvent } from './events/MutationAnnuleeEvent';
+
 // F function: checks if mutation can be cancelled
 export function canCancelMutation(eventLog, changeId) {
   let mutationInProgress = false;
@@ -15,14 +17,4 @@ export function canCancelMutation(eventLog, changeId) {
   return mutationInProgress && !mutationCancelled;
 }
 
-// Event creator for cancellation
-export function createMutationAnnuleeEvent({ changeId, workflowId, userEmail }) {
-  return {
-    event: 'MutationAnnulée',
-    workflowId,
-    changeId,
-    timestamp: new Date().toISOString(),
-    userEmail,
-  };
-}
-
+// Event creator for cancellation is now imported from events/MutationAnnuleeEvent.js

@@ -28,6 +28,26 @@ export function handlePay({ user, paymentPlan, eventLog, appendWorkflowEvents, s
   if (!paymentEntry) return;
   const transactionId = paymentEntry.transactionId;
 
+  // Zero-amount payment rejection
+  if (amount === 0) {
+    const rejectedEvent = {
+      event: 'PaiementRejected',
+      transactionId,
+      paymentPlanId: paymentPlan.paymentPlanId,
+      month,
+      amount,
+      reason: "Tout paiement d'un montant nul est rejeté",
+      timestamp: new Date().toISOString(),
+      userEmail
+    };
+    appendWorkflowEvents(rejectedEvent);
+    setTimeout(() => setPopup({
+      message: "Tout paiement d'un montant nul est rejeté",
+      color: '#d32f2f'
+    }), 0);
+    return;
+  }
+
   // Find all transactions for this payment plan and month
   const transactionsForMonth = getPaymentTransactions(latestEventLog).filter(
     t => t.month === month && t.paymentPlanId === paymentPlan.paymentPlanId

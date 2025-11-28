@@ -1,8 +1,8 @@
 import { getReconciliationRows, getLatestPaymentPlanId } from './reconciliation/reconciliationQueries';
 import { createDecisionValideeEvent } from './reconciliation/reconciliationEvents';
 import { createRessourcesOpenedForChange } from './ressources/ressourceVersionEvents';
-import { canCancelMutation } from './mutation/AnnulerMutationSlice';
-import { createMutationAnnuleeEvent } from './mutation/mutationEvents';
+import { canCancelMutation } from './mutation/AnnulerMutation/AnnulerMutationSlice';
+import { createMutationAnnuleeEvent } from './mutation/AnnulerMutation/events/MutationAnnuleeEvent';
 
 import React, { useState } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
@@ -11,6 +11,7 @@ import './EventSourcedProcess.css';
 import EventStream from './components/EventStream';
 import { appendWorkflowEvents, readWorkflowEventLog, clearWorkflowEventLog } from './workflowEventLog';
 import { getOverallStatus } from './RessourcesMutationWorkflow/projections';
+import { canCreateMutation } from './mutation/CreerMutation/CreerMutationSlice';
 import { getWorkflowStepsCached } from './workflowProjections';
 
 
@@ -93,6 +94,7 @@ export default function EventSourcedProcess() {
   // Use overallStatus for mutation status
   const hasOpenMutation = overallStatus.hasOpenMutation;
   const latestDroitsPeriod = overallStatus.latestDroitsPeriod;
+  const canCreate = canCreateMutation(events);
 
 
 
@@ -234,8 +236,8 @@ export default function EventSourcedProcess() {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={startProcess}
-                disabled={hasOpenMutation || !latestDroitsPeriod}
-                className={`btn ${hasOpenMutation || !latestDroitsPeriod ? 'btn-success' : 'btn-primary'}`}
+                disabled={!canCreate}
+                className={`btn ${!canCreate ? 'btn-success' : 'btn-primary'}`}
               >
                 Créer Mutation
               </button>
