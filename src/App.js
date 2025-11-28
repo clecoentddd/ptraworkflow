@@ -11,9 +11,15 @@ import PlanCalculPage from './planCalcul/PlanCalculPage';
 import ReconciliationPage from './reconciliation/ReconciliationPage';
 import './App.css';
 import { AuthButtons } from './auth/AuthButtons';
+import { projectRessourceMutation } from './sharedProjections/mutationHistoryProjection';
 
 function App() {
   const { isAuthenticated, user, isLoading, getAccessTokenSilently } = useAuth0();
+
+  // Debug: log projection output (replace eventLog with real data as needed)
+  const eventLog = [];
+  const projection = projectRessourceMutation(eventLog);
+  console.log('RessourceMutation Projection:', projection);
 
   useEffect(() => {
     console.log('[Auth0] isAuthenticated:', isAuthenticated);
@@ -37,7 +43,7 @@ function App() {
         <nav style={{ padding: '16px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <Link to="/" style={{ marginRight: '16px' }}>Process</Link>
-            <Link to="/mutation" style={{ marginRight: '16px' }}>Mutation de Ressources</Link>
+            <Link to="/mutationDeRessources" style={{ marginRight: '16px' }}>Mutation de Ressources</Link>
             <Link to="/droits" style={{ marginRight: '16px' }}>Droits</Link>
             <Link to="/finance" style={{ marginRight: '16px' }}>Ressources</Link>
             <Link to="/plan-calcul" style={{ marginRight: '16px' }}>Plan de Calcul</Link>
@@ -50,7 +56,7 @@ function App() {
 
         <Routes>
           <Route path="/" element={<EventSourcedProcess />} />
-          <Route path="/mutation" element={<RessourcesMutationWorkflow />} />
+          <Route path="/mutationDeRessources" element={<RessourcesMutationWorkflow />} />
           <Route path="/finance" element={<EventzFinanceTracker />} />
           <Route path="/droits" element={<DroitsPeriodPage />} />
           <Route path="/plan-calcul" element={<PlanCalculPage />} />

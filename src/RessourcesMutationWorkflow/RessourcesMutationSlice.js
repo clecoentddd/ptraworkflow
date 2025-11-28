@@ -2,7 +2,7 @@
 // Vertical slice for starting a mutation de ressources workflow
 
 import { v4 as uuidv4 } from 'uuid';
-import { hasOpenMutation } from './projections';
+import { hasOpenMutation } from '../sharedProjections/mutationHistoryProjection';
 
 // Event type
 export const RESSOURCE_MUTATION_STARTED = 'RessourceMutationStarted';

@@ -1,10 +1,7 @@
-// projections.js for RessourcesMutationWorkflow
+// mutationHistoryProjection.js (moved from projections.js)
 import getAllDroitsPeriods from '../ressources/projections/getAllDroitsPeriods';
 
-
-// Unified mutation projection
 export function projectRessourceMutation(eventLog) {
-
   const startedMutations = [];
   const annulledIds = new Set();
   const validatedIds = new Set();
@@ -20,7 +17,13 @@ export function projectRessourceMutation(eventLog) {
         mutationTypes[e.changeId] = 'MutationChange';
         mutationPeriods[e.changeId] = null;
         break;
+      case 'RessourceMutationStarted':
+        startedMutations.push(e);
+        mutationTypes[e.changeId] = 'RessourceMutation';
+        mutationPeriods[e.changeId] = null;
+        break;
       case 'MutationAnnulée':
+      case 'RessourceMutationAnnulé':
         annulledIds.add(e.changeId);
         break;
       case 'DecisionValidee':
@@ -67,19 +70,24 @@ export function projectRessourceMutation(eventLog) {
   // Find open mutations: started, not annulled, not validated
   const openMutations = mutations.filter(m => m.status === 'created');
 
-  // Fallback: use period from latest open mutation if available
+  // Use period from the latest mutation with status 'décision made'
   let latestDroitsPeriod = null;
-  if (openMutations.length > 0) {
-    const latestMutation = [...openMutations].reverse()[0];
-    latestDroitsPeriod = latestMutation?.period || null;
+  const latestDecisionMutation = [...mutations].reverse().find(m => m.status === 'décision made');
+  if (latestDecisionMutation) {
+    latestDroitsPeriod = {
+      startMonth: latestDecisionMutation.startMonth,
+      endMonth: latestDecisionMutation.endMonth
+    };
   }
 
   const latestMutation = openMutations.length > 0 ? openMutations[openMutations.length - 1] : null;
+  const openMutationChangeId = latestMutation ? latestMutation.changeId : null;
 
   return {
     latestDroitsPeriod,
     latestMutation,
     hasOpenMutation: openMutations.length > 0,
+    openMutationChangeId,
     mutations
   };
 }
@@ -99,15 +107,14 @@ export function getMutationProjection(eventLog) {
   return {
     mutations: proj.mutations,
     openMutation: proj.hasOpenMutation,
-    latestDroitsPeriod: proj.latestDroitsPeriod
+    latestDroitsPeriod: proj.latestDroitsPeriod,
+    openMutationChangeId: proj.openMutationChangeId
   };
 }
-
 
 export function getLatestDroitsPeriod(eventLog) {
   return projectRessourceMutation(eventLog).latestDroitsPeriod;
 }
-
 
 export function hasOpenMutation(eventLog) {
   return projectRessourceMutation(eventLog).hasOpenMutation;

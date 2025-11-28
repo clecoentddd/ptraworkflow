@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { startRessourceMutationCommand } from './commands';
 import { handleStartRessourceMutation } from './RessourcesMutationSlice';
-import { getLatestDroitsPeriod, hasOpenMutation } from './projections';
+import { getLatestDroitsPeriod, hasOpenMutation } from '../sharedProjections/mutationHistoryProjection';
 import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
-import { getMutationProjection } from './projections';
+import { getMutationProjection } from '../sharedProjections/mutationHistoryProjection';
 
 export default function RessourcesMutationWorkflow() {
   const [mutationStarted, setMutationStarted] = useState(false);
@@ -13,6 +13,8 @@ export default function RessourcesMutationWorkflow() {
   const droitsPeriod = getLatestDroitsPeriod(eventLog);
   const openMutation = hasOpenMutation(eventLog);
   const mutationProjection = getMutationProjection(eventLog);
+  // Log the projection for debugging
+  console.log('[RessourcesMutationWorkflow] Projection:', mutationProjection);
 
   function handleStartMutation() {
     setError(null);

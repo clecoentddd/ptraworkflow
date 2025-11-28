@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import './EventSourcedProcess.css';
 import EventStream from './components/EventStream';
 import { appendWorkflowEvents, readWorkflowEventLog, clearWorkflowEventLog } from './workflowEventLog';
-import { getOverallStatus } from './RessourcesMutationWorkflow/projections';
+import { getOverallStatus } from './sharedProjections/mutationHistoryProjection';
 import { canCreateMutation } from './mutation/CreerMutation/CreerMutationSlice';
 import { getWorkflowStepsCached } from './workflowProjections';
 
