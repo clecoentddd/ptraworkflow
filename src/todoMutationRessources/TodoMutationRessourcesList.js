@@ -36,11 +36,7 @@ export default function TodoMutationRessourcesList({ events }) {
           {JSON.stringify(projectTodoMutationRessources(events), null, 2)}
         </pre>
       )}
-      {changeId && (
-        <div style={{ marginBottom: 8 }}>
-          <b>Mutation ChangeId:</b> {changeId}
-        </div>
-      )}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: 8 }}>
         {todoState.map(step => (
           <div

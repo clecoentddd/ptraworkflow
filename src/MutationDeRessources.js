@@ -36,7 +36,7 @@ export default function MutationDeRessources() {
         setMutationError(result[0].reason);
         return;
       }
-      if (result && result[0] && result[0].event === 'MutationDeRessourcesCréé') {
+      if (result && result[0] && result[0].event === 'MutationDeRessourcesCréée') {
         setMutationStarted(true);
         // TODO: Append event to event log here
       }

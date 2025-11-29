@@ -21,10 +21,12 @@ export function createMutationF(eventLog, droitsPeriod) {
       break;
     }
   }
+  // Always use latestDecision if available
+  const effectivePeriod = latestDecision || droitsPeriod;
 
   // Business rule: no open mutation
   const openMutation = eventLog.some(e =>
-    (e.event === 'MutationChangeCreated' || e.event === 'MutationDeRessourcesCréé') &&
+    (e.event === 'MutationChangeCreated' || e.event === 'MutationDeRessourcesCréée') &&
     !eventLog.some(x => (x.event === 'MutationAnnulée' || x.event === 'MutationDeRessourcesAnnulée' || x.event === 'DecisionValidee') && x.changeId === e.changeId)
   );
   console.log('[createMutationF] openMutation:', openMutation);
@@ -33,25 +35,25 @@ export function createMutationF(eventLog, droitsPeriod) {
     return [{
       event: 'MutationCreationBlocked',
       reason: 'A mutation is already open',
-      droitsPeriod: latestDecision || null,
+      droitsPeriod: effectivePeriod || null,
       timestamp: new Date().toISOString()
     }];
   }
   // Business rule: droits period must exist
-  if (!droitsPeriod || !droitsPeriod.startMonth || !droitsPeriod.endMonth) {
+  if (!effectivePeriod || !effectivePeriod.startMonth || !effectivePeriod.endMonth) {
     console.log('[createMutationF] Blocking: no droits period');
     return [{
       event: 'MutationCreationBlocked',
       reason: 'Aucune période de droits active.',
-      droitsPeriod: latestDecision || null,
+      droitsPeriod: effectivePeriod || null,
       timestamp: new Date().toISOString()
     }];
   }
   // Create mutation event
   const mutationEvent = {
-    event: 'MutationDeRessourcesCréé',
+    event: 'MutationDeRessourcesCréée',
     changeId: uuidv4(),
-    droitsPeriod,
+    droitsPeriod: effectivePeriod,
     timestamp: new Date().toISOString(),
   };
   console.log('[createMutationF] mutationEvent:', mutationEvent);

@@ -16,7 +16,7 @@ export function handleStartRessourceMutation({ droitsPeriod, eventLog }) {
   }
   // Emit event
   return [{
-    event: 'MutationDeRessourcesCréé',
+    event: 'MutationDeRessourcesCréée',
     changeId: uuidv4(),
     droitsPeriod,
     timestamp: new Date().toISOString(),
@@ -25,8 +25,8 @@ export function handleStartRessourceMutation({ droitsPeriod, eventLog }) {
 
 // F function for this slice
 export function ressourceMutationF(eventLog, newEvent) {
-  // Only react to RessourceMutationStarted
-  if (newEvent.event !== 'MutationDeRessourcesCréé') return [];
+  // Only react to MutationDeRessourcesCréée
+  if (newEvent.event !== 'MutationDeRessourcesCréée') return [];
   // No additional events for now (could add more rules later)
   return [];
 }

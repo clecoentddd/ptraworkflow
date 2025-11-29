@@ -12,7 +12,7 @@ export default function TodoMutationRessources({ changeId }) {
   return (
     <div className="todo-container">
       <h2 className="todo-header">Todo Mutation Ressources</h2>
-      <div>Mutation ChangeId: <b>{changeId}</b></div>
+      <div>Mutation ChangeId : <b>{changeId}</b></div>
       <ul className="todo-list">
         {steps.map(step => (
           <li key={step.key} className={`todo-item${step.state === 'active' ? ' selected' : ''}`}>

@@ -1,6 +1,6 @@
 export function ressourceMutationStartedEvent({ mutationId, droitsPeriod }) {
   return {
-    event: 'MutationDeRessourcesCréé',
+    event: 'MutationDeRessourcesCréée',
     changeId: mutationId,
     droitsPeriod,
     timestamp: new Date().toISOString(),

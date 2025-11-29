@@ -17,7 +17,7 @@ export function projectRessourceMutation(eventLog) {
         mutationTypes[e.changeId] = 'MutationChange';
         mutationPeriods[e.changeId] = null;
         break;
-      case 'RessourceMutationStarted':
+      case 'MutationDeRessourcesCréée':
         startedMutations.push(e);
         mutationTypes[e.changeId] = 'RessourceMutation';
         mutationPeriods[e.changeId] = null;
