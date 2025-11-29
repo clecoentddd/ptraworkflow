@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { readWorkflowEventLog } from '../workflowEventLog';
 import { getStepState } from '../workflowProjections';
 import { useReconciliationValidation } from './useReconciliationValidation';
-import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
+import ProcessFlowStatusBar from '../StandardProcessFlow/ProcessFlowStatusBar';
 import EventStream from '../components/EventStream';
 
 export default function ReconciliationPage() {

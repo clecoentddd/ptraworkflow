@@ -1,0 +1,1 @@
+// moved from ../eventz/deleteEntry/EntryDeletedEvent.js

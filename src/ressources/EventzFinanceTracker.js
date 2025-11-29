@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthUser } from '../auth/AuthUserContext';
 import EventStream from '../components/EventStream';
-import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
+import ProcessFlowStatusBar from '../StandardProcessFlow/ProcessFlowStatusBar';
 import { readWorkflowEventLog } from '../workflowEventLog';
 import { getWorkflowStepsCached } from '../workflowProjections';
 import computeEntries, { QueryRessourceEntries } from './projections/computeEntries';

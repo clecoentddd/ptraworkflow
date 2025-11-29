@@ -4,12 +4,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { hasOpenMutation } from '../sharedProjections/mutationHistoryProjection';
 
-// Event type
-export const RESSOURCE_MUTATION_STARTED = 'RessourceMutationStarted';
-
-// Command type
-export const START_RESSOURCE_MUTATION = 'StartRessourceMutation';
-
 // Command handler
 export function handleStartRessourceMutation({ droitsPeriod, eventLog }) {
   // Rule: no open change
@@ -22,7 +16,7 @@ export function handleStartRessourceMutation({ droitsPeriod, eventLog }) {
   }
   // Emit event
   return [{
-    event: RESSOURCE_MUTATION_STARTED,
+    event: 'MutationDeRessourcesCréé',
     changeId: uuidv4(),
     droitsPeriod,
     timestamp: new Date().toISOString(),
@@ -32,7 +26,7 @@ export function handleStartRessourceMutation({ droitsPeriod, eventLog }) {
 // F function for this slice
 export function ressourceMutationF(eventLog, newEvent) {
   // Only react to RessourceMutationStarted
-  if (newEvent.event !== RESSOURCE_MUTATION_STARTED) return [];
+  if (newEvent.event !== 'MutationDeRessourcesCréé') return [];
   // No additional events for now (could add more rules later)
   return [];
 }

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { startRessourceMutationCommand } from './commands';
+import { créerMutationDeRessourcesCommand } from './commands';
 import { handleStartRessourceMutation } from './RessourcesMutationSlice';
 import { getLatestDroitsPeriod, hasOpenMutation } from '../sharedProjections/mutationHistoryProjection';
 import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
 import { getMutationProjection } from '../sharedProjections/mutationHistoryProjection';
+import UpdateEntryForm from '../ressourcesDelta/updateEntry/UpdateEntryForm';
+import TodoMutationRessources from '../todoMutationRessources/TodoMutationRessources';
 
 export default function RessourcesMutationWorkflow() {
   const [mutationStarted, setMutationStarted] = useState(false);
@@ -15,12 +17,20 @@ export default function RessourcesMutationWorkflow() {
   const mutationProjection = getMutationProjection(eventLog);
   // Log the projection for debugging
   console.log('[RessourcesMutationWorkflow] Projection:', mutationProjection);
+  const openMutationChangeId = mutationProjection.openMutationChangeId;
 
   function handleStartMutation() {
     setError(null);
     try {
-      const events = handleStartRessourceMutation({ droitsPeriod, eventLog });
+      // Use eventz-compliant command logic
+      const events = créerMutationDeRessourcesCommand(eventLog, droitsPeriod);
       events.forEach(e => appendWorkflowEvents(e));
+      // If mutation was blocked, show error
+      const blocked = events.find(e => e.event === 'MutationCreationBlocked');
+      if (blocked) {
+        setError(blocked.reason);
+        return;
+      }
       setMutationStarted(true);
     } catch (err) {
       setError(err.message);
@@ -38,12 +48,9 @@ export default function RessourcesMutationWorkflow() {
         >
           Démarrer une mutation de ressources
         </button>
-      ) : (
-        <div>
-          {/* Render mutation steps/todo list here */}
-          <p>Mutation workflow steps will appear here...</p>
-        </div>
-      )}
+      ) : null}
+      <TodoMutationRessources changeId={openMutationChangeId} />
+      <UpdateEntryForm changeId={openMutationChangeId} />
       <button
         className="btn btn-secondary"
         style={{ marginTop: 16 }}

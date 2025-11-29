@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useAuthUser } from '../auth/AuthUserContext';
 import '../layout.css';
 import './PaymentPlanPage.css';
-import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
+import ProcessFlowStatusBar from '../StandardProcessFlow/ProcessFlowStatusBar';
 import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
 import { getPaymentPlanState } from './paymentPlanProjection';
 import EventStream from '../components/EventStream';

@@ -105,10 +105,9 @@ export function getOverallStatus(eventLog) {
 export function getMutationProjection(eventLog) {
   const proj = projectRessourceMutation(eventLog);
   return {
-    mutations: proj.mutations,
+    mutations: proj.mutations.map(({ period, ...rest }) => rest),
     openMutation: proj.hasOpenMutation,
-    latestDroitsPeriod: proj.latestDroitsPeriod,
-    openMutationChangeId: proj.openMutationChangeId
+    latestDroitsPeriod: proj.latestDroitsPeriod
   };
 }
 

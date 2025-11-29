@@ -8,7 +8,7 @@ import computeEntries, { QueryRessourceEntries } from '../ressources/projections
 import { getLastCalculation } from './planCalculProjection';
 import { createCalculation } from './planCalculService';
 import { createPlanDeCalculEffectueEvent } from './event';
-import ProcessFlowStatusBar from '../sharedProjections/ProcessFlowStatusBar';
+import ProcessFlowStatusBar from '../StandardProcessFlow/ProcessFlowStatusBar';
 import '../layout.css';
 import './planDeCalcul.css';
 
