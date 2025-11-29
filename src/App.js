@@ -12,6 +12,7 @@ import ReconciliationPage from './reconciliation/ReconciliationPage';
 import './App.css';
 import { AuthButtons } from './auth/AuthButtons';
 import { projectRessourceMutation } from './sharedProjections/mutationHistoryProjection';
+import TodoMutationRessources from './todoMutationRessources/TodoMutationRessources';
 
 function App() {
   const { isAuthenticated, user, isLoading, getAccessTokenSilently } = useAuth0();
@@ -20,6 +21,7 @@ function App() {
   const eventLog = [];
   const projection = projectRessourceMutation(eventLog);
   console.log('RessourceMutation Projection:', projection);
+  const openMutationChangeId = projection.openMutationChangeId;
 
   useEffect(() => {
     console.log('[Auth0] isAuthenticated:', isAuthenticated);
@@ -36,7 +38,8 @@ function App() {
     }
   }, [isAuthenticated, isLoading, user, getAccessTokenSilently]);
 
-  const RessourcesMutationWorkflow = require('./RessourcesMutationWorkflow/RessourcesMutationWorkflow').default;
+  const RessourcesMutationWorkflow = require('./CréerMutationDeRessources/RessourcesMutationWorkflow').default;
+  const MutationDeRessources = require('./MutationDeRessources').default;
   return (
     <Router>
       <div className="App">
@@ -47,7 +50,7 @@ function App() {
             <Link to="/droits" style={{ marginRight: '16px' }}>Droits</Link>
             <Link to="/finance" style={{ marginRight: '16px' }}>Ressources</Link>
             <Link to="/plan-calcul" style={{ marginRight: '16px' }}>Plan de Calcul</Link>
-            <Link to="/reconciliation" style={{ marginRight: '16px' }}>Reconciliation</Link>
+            <Link to="/reconciliation" style={{ marginRight: '16px' }}>Décision</Link>
             <Link to="/payment-plan" style={{ marginRight: '16px' }}>Payment Plan</Link>
             <Link to="/git">Comme Git</Link>
           </div>
@@ -56,7 +59,7 @@ function App() {
 
         <Routes>
           <Route path="/" element={<EventSourcedProcess />} />
-          <Route path="/mutationDeRessources" element={<RessourcesMutationWorkflow />} />
+          <Route path="/mutationDeRessources" element={<MutationDeRessources />} />
           <Route path="/finance" element={<EventzFinanceTracker />} />
           <Route path="/droits" element={<DroitsPeriodPage />} />
           <Route path="/plan-calcul" element={<PlanCalculPage />} />
