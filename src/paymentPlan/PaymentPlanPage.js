@@ -7,7 +7,7 @@ import './PaymentPlanPage.css';
 import ProcessFlowStatusBar from '../StandardProcessFlow/ProcessFlowStatusBar';
 import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
 import { getPaymentPlanState } from './paymentPlanProjection';
-import EventStream from '../components/EventStream';
+import EventStream from '../sharedComponents/EventStream/EventStream';
 import { getPaymentTransactions } from '../paymentTransaction/paymentTransactionProjection';
 import { createPaiementDemandeEvent } from '../paymentTransaction/paymentTransactionSlice';
 import { handlePay } from '../paymentTransaction/handlePay';

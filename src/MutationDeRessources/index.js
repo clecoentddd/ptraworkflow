@@ -1,13 +1,13 @@
 import React from 'react';
-import EventzFinanceTracker from '../../MutationDeRessources/Projections/EventzFinanceTracker';
-// Removed: import TodoMutationRessourcesList from '../../todoMutationRessources/TodoMutationRessourcesList';
-import { getWorkflowStepsCached } from '../../workflowProjections';
-import { créerMutationDeRessourcesCommand } from '../commands';
-import { getMutationProjection } from '../../MutationDeRessources/02 ProjectionMutationDeRessources';
-import { getOverallStatus } from '../../sharedProjections/mutationHistoryProjection';
-import MutationStatusSummary from '../../sharedComponents/MutationStatusSummary/MutationStatusSummary';
+import EventzFinanceTracker from '../ressources/EventzFinanceTracker';
+// Removed: import TodoMutationRessourcesList from './todoMutationRessources/TodoMutationRessourcesList';
+import { getWorkflowStepsCached } from '../workflowProjections';
+import { créerMutationDeRessourcesCommand } from './01 CréerMutationDeRessources/commands';
+import { getMutationProjection, getOverallStatus } from '../sharedProjections/mutationHistoryProjection';
+import MutationStatusSummary from '../sharedComponents/MutationStatusSummary/MutationStatusSummary';
 import '../MutationDeRessources.css';
-import { readWorkflowEventLog } from '../../workflowEventLog';
+import { readWorkflowEventLog } from '../workflowEventLog';
+import MutationTodoStatus from './02 ProjectionMutationDeRessources/MutationTodoStatus';
 
 export default function MutationDeRessources() {
   const WORKFLOW_ID = 'ressource-mutation-workflow';
@@ -55,6 +55,8 @@ export default function MutationDeRessources() {
         <h1 style={{ margin: 0 }}>Mutation de Ressources</h1>
       </div>
       <MutationStatusSummary overallStatus={overallStatus} eventLog={eventLog} />
+      {/* Add MutationTodoStatus component below the status summary */}
+      <MutationTodoStatus changeId={overallStatus?.latestDroitsPeriod?.changeId} status={overallStatus?.status} />
       <div style={{ marginBottom: 16 }}>
         <button
           className="btn-start-mutation"

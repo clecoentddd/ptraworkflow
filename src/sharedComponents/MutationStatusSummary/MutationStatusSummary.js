@@ -1,5 +1,6 @@
 import React from 'react';
-import { getLatestDroitsValidéesPeriod } from '../sharedProjections/projectionPériodesDeDroitsValidées';
+import './MutationStatusSummary.css';
+import { getLatestDroitsValidéesPeriod } from '../../sharedProjections/projectionPériodesDeDroitsValidées';
 
 /**
  * MutationStatusSummary - shared component to display mutation status summary
@@ -14,15 +15,15 @@ export default function MutationStatusSummary({ overallStatus, eventLog }) {
   // Use projection to get latest validated droits period
   const latestDroitsPeriod = getLatestDroitsValidéesPeriod(eventLog);
   return (
-    <div style={{ background: '#f7f7f7', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-      <div style={{ fontWeight: 600, fontSize: 17, marginBottom: 8 }}>Statut Mutation</div>
-      <div><b>Current ChangeId:</b> {latestChangeId}</div>
-      <div>
+    <div className="mutation-status-summary">
+      <div className="mutation-status-title">Statut Mutation</div>
+      <div className="mutation-status-row"><b>Current ChangeId:</b> {latestChangeId}</div>
+      <div className="mutation-status-row">
         <b>Dernière période de droits:</b> {latestDroitsPeriod && latestDroitsPeriod.startMonth && latestDroitsPeriod.endMonth
           ? `${latestDroitsPeriod.startMonth} à ${latestDroitsPeriod.endMonth}`
           : '-'}
       </div>
-      <div>
+      <div className="mutation-status-row">
         <b>Statut mutation:</b> {hasOpenMutation ? 'Mutation ouverte' : 'Aucune mutation ouverte'}
       </div>
     </div>

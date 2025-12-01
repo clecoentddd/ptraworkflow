@@ -1,1 +1,0 @@
-// moved from ../eventz/addEntry/EntryAddedEvent.js

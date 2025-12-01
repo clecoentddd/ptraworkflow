@@ -1,11 +1,11 @@
 import { readWorkflowEventLog } from '../../workflowEventLog';
 import getDatesDuDroit from './getAllDroitsPeriods';
 // Query: get resource entries grouped by month for a given period from canonical event log
-// Usage: QueryRessourceEntries(startMonth, endMonth) => { [month]: [entries] }
-export function QueryRessourceEntries(startMonth, endMonth) {
+// Usage: queryRessourceEntries(startMonth, endMonth) => { [month]: [entries] }
+export function queryRessourceEntries(startMonth, endMonth) {
 	// Always use the canonical workflow event log for both params
 	const eventLog = readWorkflowEventLog();
-	console.log('[QueryRessourceEntries] eventLog:', eventLog);
+	console.log('[queryRessourceEntries] eventLog:', eventLog);
 	// If a period is specified, filter to that period, else use the latest
 	let period = null;
 	if (startMonth && endMonth) {
@@ -91,26 +91,49 @@ function computeEntries(startMonth, endMonth) {
 	}
 	for (const e of eventLog) {
 		if (e.event === 'EntryAdded') {
-			// Determine version id for this entry
 			const versionId = openedVersions[e.changeId];
-			// Ignore if cancelled (eventz, new or legacy)
-			if (cancelledChangeIds.has(e.changeId) || (versionId && cancelledVersions.has(versionId)) || legacyCancelled.has(e.changeId)) continue;
+			const isCancelled = cancelledChangeIds.has(e.changeId) || (versionId && cancelledVersions.has(versionId)) || legacyCancelled.has(e.changeId);
+			console.log('[computeEntries] EntryAdded:', {
+				entryId: e.entryId,
+				changeId: e.changeId,
+				versionId,
+				isCancelled,
+				entryStart: e.payload?.startMonth,
+				entryEnd: e.payload?.endMonth
+			});
+			if (isCancelled) {
+				console.log('[computeEntries] Skipping cancelled entry:', e.entryId);
+				continue;
+			}
 			const entryStart = e.payload?.startMonth;
 			const entryEnd = e.payload?.endMonth;
-			if (!entryStart || !entryEnd) continue;
+			if (!entryStart || !entryEnd) {
+				console.log('[computeEntries] Skipping entry with missing start/end:', e.entryId);
+				continue;
+			}
 			for (const month of monthRange(entryStart, entryEnd)) {
-				// Only include months within the requested droits period
-				if (startMonth && endMonth && !isMonthInRange(month, startMonth, endMonth)) continue;
+				if (startMonth && endMonth && !isMonthInRange(month, startMonth, endMonth)) {
+					console.log('[computeEntries] Skipping month out of range:', month, 'for entry:', e.entryId);
+					continue;
+				}
 				if (!byMonth[month]) byMonth[month] = [];
 				byMonth[month].push({ ...e.payload, entryId: e.entryId, changeId: e.changeId, ressourceVersionId: versionId });
+				console.log('[computeEntries] Added entry to month:', month, 'entryId:', e.entryId);
 			}
 		}
 		if (e.event === 'EntryDeleted') {
+			console.log('[computeEntries] EntryDeleted:', e.entryId);
 			for (const month in byMonth) {
+				const before = byMonth[month].length;
 				byMonth[month] = byMonth[month].filter(ent => ent.entryId !== e.entryId);
+				const after = byMonth[month].length;
+				if (before !== after) {
+					console.log('[computeEntries] Removed entry from month:', month, 'entryId:', e.entryId);
+				}
 			}
 		}
 		if (e.event === 'EntryUpdated') {
+			console.log('[computeEntries] EntryUpdated:', e.entryId);
 			for (const month in byMonth) {
 				byMonth[month] = byMonth[month].map(ent =>
 					ent.entryId === e.entryId ? { ...ent, ...e.payload } : ent
@@ -118,6 +141,7 @@ function computeEntries(startMonth, endMonth) {
 			}
 		}
 	}
+	console.log('[computeEntries] Final byMonth:', byMonth);
 	return byMonth;
 }
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getTodosCached } from '../projections';
 import { appendEvents, readEventLog } from '../eventLog';
-import EventStream from '../components/EventStream';
+import EventStream from '../sharedComponents/EventStream/EventStream';
 import './TodoWorkflow.css';
 
 function statusLabel(status) {

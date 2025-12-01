@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
+import './eventBus'; // Ensure event bus is loaded and singleton
 import { useAuth0 } from '@auth0/auth0-react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import EventSourcedProcess from './EventSourcedProcess';
-import EventzFinanceTracker from './ressources/EventzFinanceTracker';
+import EventzFinanceTracker from './ressources//EventzFinanceTracker';
 import PaymentPlanPage from './paymentPlan/PaymentPlanPage';
 import DroitsPeriodPage from './droits/DroitsPeriodPage';
 import CommeGit from './CommeGit';
@@ -12,7 +13,7 @@ import ReconciliationPage from './reconciliation/ReconciliationPage';
 import './App.css';
 import { AuthButtons } from './auth/AuthButtons';
 import { projectRessourceMutation } from './sharedProjections/mutationHistoryProjection';
-import TodoMutationRessources from './todoMutationRessources/TodoMutationRessources';
+// Removed: import TodoMutationRessources from './todoMutationRessources/TodoMutationRessources';
 
 function App() {
   const { isAuthenticated, user, isLoading, getAccessTokenSilently } = useAuth0();
@@ -38,8 +39,8 @@ function App() {
     }
   }, [isAuthenticated, isLoading, user, getAccessTokenSilently]);
 
-  const RessourcesMutationWorkflow = require('./CréerMutationDeRessources/RessourcesMutationWorkflow').default;
-  const MutationDeRessources = require('./MutationDeRessources').default;
+  const RessourcesMutationWorkflow = require('./MutationDeRessources/01 CréerMutationDeRessources/RessourcesMutationWorkflow').default;
+  const MutationDeRessources = require('./MutationDeRessources').default; // Now resolves to src/MutationDeRessources/index.js
   return (
     <Router>
       <div className="App">

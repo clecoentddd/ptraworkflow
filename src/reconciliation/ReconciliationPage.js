@@ -3,7 +3,7 @@ import { readWorkflowEventLog } from '../workflowEventLog';
 import { getStepState } from '../workflowProjections';
 import { useReconciliationValidation } from './useReconciliationValidation';
 import ProcessFlowStatusBar from '../StandardProcessFlow/ProcessFlowStatusBar';
-import EventStream from '../components/EventStream';
+import EventStream from '../sharedComponents/EventStream/EventStream';
 
 export default function ReconciliationPage() {
   // Filter DecisionValidee events for event stream

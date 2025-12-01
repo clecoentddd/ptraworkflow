@@ -1,0 +1,26 @@
+/* Styles for the raw projection <pre> block */
+.projection-raw-pre {
+	font-size: 13px;
+	margin: 0;
+	background: #222;
+	color: #fff;
+	padding: 16px;
+	border-radius: 8px;
+}
+/* Button for toggling projection */
+.projection-toggle-btn {
+	background: #1976d2;
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	padding: 8px 18px;
+	font-size: 1rem;
+	font-weight: 600;
+	margin-bottom: 12px;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.projection-toggle-btn:hover {
+	background: #1565c0;
+}
+/* ResourceProjectionViewer styles */

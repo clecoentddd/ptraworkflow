@@ -1,0 +1,17 @@
+.mutation-status-summary {
+  background: #f7f7f7;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.mutation-status-title {
+  font-weight: 600;
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+.mutation-status-row {
+  margin-bottom: 4px;
+}
+.mutation-status-row b {
+  margin-right: 4px;
+}

@@ -1,10 +1,10 @@
-import EventStream from '../components/EventStream';
+import EventStream from '../sharedComponents/EventStream/EventStream';
 import { PLAN_DE_CALCUL_EFFECTUE_EVENT } from './event';
 import React, { useState } from 'react';
 import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
 import { getWorkflowStepsCached } from '../workflowProjections';
 import getDatesDuDroit from '../ressources/projections/getAllDroitsPeriods';
-import computeEntries, { QueryRessourceEntries } from '../ressources/projections/computeEntries';
+import computeEntries, { queryRessourceEntries } from '../ressources/projections/computeEntries';
 import { getLastCalculation } from './planCalculProjection';
 import { createCalculation } from './planCalculService';
 import { createPlanDeCalculEffectueEvent } from './event';
@@ -58,7 +58,7 @@ export default function PlanCalculPage() {
     }
     // Call the new query
     console.log('[PlanCalculPage] handleQuery: startMonth, endMonth', latestDroitsPeriod.startMonth, latestDroitsPeriod.endMonth);
-    const byMonth = QueryRessourceEntries(latestDroitsPeriod.startMonth, latestDroitsPeriod.endMonth);
+    const byMonth = queryRessourceEntries(latestDroitsPeriod.startMonth, latestDroitsPeriod.endMonth);
     console.log('[PlanCalculPage] QueryRessourceEntries result:', byMonth);
     setQueryResult(byMonth);
   }
@@ -94,7 +94,7 @@ export default function PlanCalculPage() {
   function handleCalculate() {
     if (!canCalculate || !latestDroitsPeriod) return;
     // Use QueryRessourceEntries to get the projection for the current period
-    const projection = QueryRessourceEntries(latestDroitsPeriod.startMonth, latestDroitsPeriod.endMonth);
+    const projection = queryRessourceEntries(latestDroitsPeriod.startMonth, latestDroitsPeriod.endMonth);
     const months = Object.keys(projection);
     // Build ressources array: sum income and subtract expenses for each month
     const rawRessources = months.map(month => {
@@ -176,7 +176,7 @@ export default function PlanCalculPage() {
           <div className="plan-de-calcul-table-section">
             <h3 className="plan-de-calcul-table-title">Synthèse mensuelle</h3>
             {(() => {
-              const projection = QueryRessourceEntries(latestDroitsPeriod?.startMonth, latestDroitsPeriod?.endMonth) || {};
+              const projection = queryRessourceEntries(latestDroitsPeriod?.startMonth, latestDroitsPeriod?.endMonth) || {};
               const months = Object.keys(projection);
               // Build unique entry list
               const entryMap = new Map();

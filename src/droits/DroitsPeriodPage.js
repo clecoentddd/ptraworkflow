@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UpdateDroitsPeriod } from './updateDroits';
 import './DroitsPeriodPage.css';
 import ProcessFlowStatusBar from '../StandardProcessFlow/ProcessFlowStatusBar';
-import EventStream from '../components/EventStream';
+import EventStream from '../sharedComponents/EventStream/EventStream';
 import { readWorkflowEventLog, appendWorkflowEvents } from '../workflowEventLog';
 import { getWorkflowStepsCached } from '../workflowProjections';
 import getDatesDuDroit from '../ressources/projections/getAllDroitsPeriods';

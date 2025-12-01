@@ -1,13 +1,13 @@
 import React from 'react';
-import EventzFinanceTracker from '../../MutationDeRessources/Projections/EventzFinanceTracker';
+import EventzFinanceTracker from '../../Projections/EventzFinanceTracker';
 // Removed: import TodoMutationRessourcesList from '../../todoMutationRessources/TodoMutationRessourcesList';
-import { getWorkflowStepsCached } from '../../workflowProjections';
+import { getWorkflowStepsCached } from '../../../workflowProjections';
 import { créerMutationDeRessourcesCommand } from '../commands';
-import { getMutationProjection } from '../../MutationDeRessources/02 ProjectionMutationDeRessources';
-import { getOverallStatus } from '../../sharedProjections/mutationHistoryProjection';
-import MutationStatusSummary from '../../sharedComponents/MutationStatusSummary/MutationStatusSummary';
+import { getMutationProjection } from '../../02 ProjectionMutationDeRessources';
+import { getOverallStatus } from '../../../sharedProjections/mutationHistoryProjection';
+import MutationStatusSummary from '../../../sharedComponents/MutationStatusSummary/MutationStatusSummary';
 import '../MutationDeRessources.css';
-import { readWorkflowEventLog } from '../../workflowEventLog';
+import { readWorkflowEventLog } from '../../../workflowEventLog';
 
 export default function MutationDeRessources() {
   const WORKFLOW_ID = 'ressource-mutation-workflow';
