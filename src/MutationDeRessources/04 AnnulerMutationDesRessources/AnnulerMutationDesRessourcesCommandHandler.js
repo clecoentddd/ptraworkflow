@@ -9,7 +9,7 @@ export default function AnnulerMutationDesRessourcesCommandHandler(command) {
   const eventLog = readWorkflowEventLog();
   // Check for MutationDeRessourcesCréée event
   const { statusByChangeId } = getMutationProjection(eventLog);
-  if (!statusByChangeId[changeId]) throw new Error('No MutationDeRessourcesCréée event for this changeId');
+  if (!statusByChangeId[changeId]) throw new Error(`No MutationDeRessourcesCréée event for changeId: ${changeId}`);
   // Check if already cancelled
   const alreadyCancelled = eventLog.some(e => e.event === 'MutationDesRessourcesAnnulée' && e.changeId === changeId);
   if (alreadyCancelled) throw new Error('Mutation already cancelled for this changeId');

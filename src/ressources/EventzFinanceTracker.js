@@ -27,14 +27,19 @@ const EventzFinanceTracker = () => {
 
     // Handler for Afficher Périodes Modifiées
     function handleAfficherPeriodesModifiees() {
-      const changeId = latestDroitsPeriod && latestDroitsPeriod.changeId ? latestDroitsPeriod.changeId : null;
-      if (!changeId) {
-        setPeriodesModifieesResult('Aucun changeId trouvé');
+      // Get latest open mutation's changeId from projection
+      const { statusByChangeId } = require("../MutationDeRessources/02 ProjectionMutationDeRessources/projectionMutationDeRessources").getMutationProjection(eventLog);
+      const latestOpenChangeId = Object.entries(statusByChangeId)
+        .filter(([_, status]) => status === "Ressources à saisir")
+        .map(([changeId]) => changeId)
+        .pop() || null;
+      if (!latestOpenChangeId) {
+        setPeriodesModifieesResult('Aucun changeId ouvert trouvé');
         return;
       }
       // Lazy load to avoid import errors if not present
       import('../MutationDeRessources/06 ProjectionPériodesModifiées/queryPériodesModifiées').then(mod => {
-        const result = mod.queryPériodesModifiées(eventLog, changeId);
+        const result = mod.queryPériodesModifiées(eventLog, latestOpenChangeId);
         setPeriodesModifieesResult(result);
       }).catch(() => {
         setPeriodesModifieesResult('Erreur lors de la requête.');
@@ -47,7 +52,10 @@ const EventzFinanceTracker = () => {
    * ------------------------------------------------------------ */
   const [eventLog, setEventLog] = useState(() => readWorkflowEventLog());
   const steps = getWorkflowStepsCached("main-workflow");
-  const isStep4Ouverte = steps[4]?.state === "Ouverte";
+  // Enable entry actions if step 4 is open OR any mutation status is 'Ressources à saisir'
+  const { statusByChangeId } = require("../MutationDeRessources/02 ProjectionMutationDeRessources/projectionMutationDeRessources").getMutationProjection(eventLog);
+  const hasRessourcesASaisir = Object.values(statusByChangeId).includes("Ressources à saisir");
+  const isStep4Ouverte = steps[4]?.state === "Ouverte" || hasRessourcesASaisir;
 
   /** ------------------------------------------------------------
    * DROITS PERIOD
@@ -279,7 +287,17 @@ try {
             <div className="modal-overlay" onClick={() => setPeriodesModifieesResult(null)}>
               <div className="modal-content" onClick={e => e.stopPropagation()}>
                 <button className="modal-close" onClick={() => setPeriodesModifieesResult(null)}>&times;</button>
-                <strong>Périodes Modifiées (queryPériodesModifiées):</strong>
+                <strong>
+                  Périodes Modifiées (queryPériodesModifiées)
+                  {(() => {
+                    const { statusByChangeId } = require("../MutationDeRessources/02 ProjectionMutationDeRessources/projectionMutationDeRessources").getMutationProjection(eventLog);
+                    const latestOpenChangeId = Object.entries(statusByChangeId)
+                      .filter(([_, status]) => status === "Ressources à saisir")
+                      .map(([changeId]) => changeId)
+                      .pop() || null;
+                    return latestOpenChangeId ? ` — changeId: ${latestOpenChangeId}` : '';
+                  })()}
+                </strong>
                 <pre style={{ fontSize: 13, margin: 0, background: '#222', color: '#fff', padding: 16, borderRadius: 8 }}>
                   {typeof periodesModifieesResult === 'string' ? periodesModifieesResult : JSON.stringify(periodesModifieesResult, null, 2)}
                 </pre>

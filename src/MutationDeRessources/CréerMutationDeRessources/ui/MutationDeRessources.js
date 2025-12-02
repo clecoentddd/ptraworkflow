@@ -1,4 +1,5 @@
 import React from 'react';
+import AnnulerMutationDesRessourcesButton from '../../04 AnnulerMutationDesRessources/AnnulerMutationDesRessourcesButton';
 import EventzFinanceTracker from '../../Projections/EventzFinanceTracker';
 // Removed: import TodoMutationRessourcesList from '../../todoMutationRessources/TodoMutationRessourcesList';
 import { getWorkflowStepsCached } from '../../../workflowProjections';
@@ -55,7 +56,7 @@ export default function MutationDeRessources() {
         <h1 style={{ margin: 0 }}>Mutation de Ressources</h1>
       </div>
       <MutationStatusSummary overallStatus={overallStatus} eventLog={eventLog} />
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: '16px' }}>
         <button
           className="btn-start-mutation"
           style={{
@@ -74,6 +75,11 @@ export default function MutationDeRessources() {
         >
           {mutationStarted ? 'Mutation démarrée' : 'Créer une Mutation de Ressources'}
         </button>
+        <AnnulerMutationDesRessourcesButton
+          changeId={overallStatus?.latestChangeId || 'NO_CHANGE_ID'}
+          userEmail={overallStatus?.userEmail || 'automation'}
+          onSuccess={() => window.location.reload()}
+        />
         {mutationError && (
           <span style={{ color: 'red', marginLeft: 12 }}>{mutationError}</span>
         )}

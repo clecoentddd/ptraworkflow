@@ -1,9 +1,10 @@
 import React from 'react';
+import AnnulerMutationDesRessourcesButton from './04 AnnulerMutationDesRessources/AnnulerMutationDesRessourcesButton';
 import EventzFinanceTracker from '../ressources/EventzFinanceTracker';
 // Removed: import TodoMutationRessourcesList from './todoMutationRessources/TodoMutationRessourcesList';
 import { getWorkflowStepsCached } from '../workflowProjections';
 import { créerMutationDeRessourcesCommand } from './01 CréerMutationDeRessources/commands';
-import { getMutationProjection, getOverallStatus } from '../sharedProjections/mutationHistoryProjection';
+import { getOverallStatus } from '../sharedProjections/mutationHistoryProjection';
 import MutationStatusSummary from '../sharedComponents/MutationStatusSummary/MutationStatusSummary';
 import '../MutationDeRessources.css';
 import { readWorkflowEventLog } from '../workflowEventLog';
@@ -49,7 +50,7 @@ export default function MutationDeRessources() {
 
   // Get overall status for display
   const overallStatus = getOverallStatus(eventLog);
-  const { openMutationChangeId } = getMutationProjection(eventLog);
+  const openMutationChangeId = overallStatus?.latestMutation?.changeId || '';
 
   return (
     <div className={styles['mutation-ressources-page']}>
@@ -59,7 +60,7 @@ export default function MutationDeRessources() {
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div style={{ flex: 1 }}>
           <MutationStatusSummary overallStatus={overallStatus} eventLog={eventLog} className={styles['mutation-status-summary']} />
-          <div className={styles['mutation-status-summary']}>
+          <div className={styles['mutation-status-summary']} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               className={styles['btn-start-mutation']}
               onClick={handleStartMutation}
@@ -67,6 +68,11 @@ export default function MutationDeRessources() {
             >
               {mutationStarted ? 'Mutation démarrée' : 'Créer une Mutation de Ressources'}
             </button>
+            <AnnulerMutationDesRessourcesButton
+              changeId={openMutationChangeId || 'NO_CHANGE_ID'}
+              userEmail={overallStatus?.userEmail || 'automation'}
+              onSuccess={() => window.location.reload()}
+            />
             {mutationError && (
               <span className={styles['mutation-error']}>{mutationError}</span>
             )}

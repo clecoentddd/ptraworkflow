@@ -17,14 +17,25 @@ export default function UpdateEntryCommandHandler(events, command, userEmail) {
   // Find the previous entry to copy all fields (if needed for projections)
   const prevEntry = events.slice().reverse().find(e => e.entryId === entryId && e.event === 'EntryAdded');
   if (!prevEntry) throw new Error('Previous entry not found for update.');
-  // Emit EntryUpdatedEvent
-  const updatedEvent = EntryUpdatedEvent({
+  // Emit EntryDeletedEvent and EntryAddedEvent
+  const { createEntryDeletedEvent } = require('../deleteEntry/EntryDeletedEvent');
+  const { createEntryAddedEvent } = require('../addEntry/EntryAddedEvent');
+  const deleteEvent = createEntryDeletedEvent({
+    entryId,
+    changeId,
+    ressourceVersionId,
+    userEmail
+  });
+  const addEvent = createEntryAddedEvent({
     entryId,
     changeId,
     ressourceVersionId,
     userEmail,
-    startMonth,
-    endMonth
+    payload: {
+      ...prevEntry.payload,
+      startMonth,
+      endMonth
+    }
   });
-  return [updatedEvent];
+  return [deleteEvent, addEvent];
 }

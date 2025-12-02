@@ -20,7 +20,7 @@ export default function AnnulerMutationDesRessourcesButton({ changeId, userEmail
   }
 
   return (
-    <div style={{ margin: '12px 0' }}>
+    <div style={{ margin: '12px 0', border: '2px dashed red', padding: '8px' }}>
       <button
         style={{
           background: '#e11d48',
