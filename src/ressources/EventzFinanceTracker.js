@@ -45,7 +45,7 @@ const EventzFinanceTracker = () => {
   /** ------------------------------------------------------------
    * EVENT LOG + WORKFLOW STEPS
    * ------------------------------------------------------------ */
-  const eventLog = readWorkflowEventLog();
+  const [eventLog, setEventLog] = useState(() => readWorkflowEventLog());
   const steps = getWorkflowStepsCached("main-workflow");
   const isStep4Ouverte = steps[4]?.state === "Ouverte";
 
@@ -198,8 +198,7 @@ try {
     try {
       const newEvents = handleAddEntry(eventLog, command, userEmail);
       alert("Entry added.");
-      // Re-read event log to update UI (if needed, use state or context)
-      window.location.reload();
+      setEventLog(prev => [...prev, ...newEvents]);
     } catch (err) {
       if (err.message && err.message.includes("authenticate")) {
         alert("Vous devez vous authentifier pour ajouter une entrée.");
@@ -219,7 +218,7 @@ try {
     try {
       const newEvents = handleDeleteEntry(eventLog, command, userEmail);
       alert("Entry removed.");
-      window.location.reload();
+      setEventLog(prev => [...prev, ...newEvents]);
     } catch (err) {
       if (err.message && err.message.includes("authentifier")) {
         alert("Vous devez vous authentifier pour supprimer une entrée.");
@@ -317,6 +316,8 @@ try {
                   entryId={updateModalEntry.entryId}
                   startMonth={updateModalEntry.startMonth}
                   endMonth={updateModalEntry.endMonth}
+                  onClose={() => setUpdateModalEntry(null)}
+                  onEventLogUpdate={() => setEventLog(readWorkflowEventLog())}
                 />
               </div>
             </div>
@@ -328,7 +329,7 @@ try {
         <EventStream
           events={eventLog}
           filter={(e) =>
-            e.event === "EntryAdded" || e.event === "EntryDeleted"
+            e.event === "EntryAdded" || e.event === "EntryDeleted" || e.event === "EntryUpdated"
           }
           maxHeight={400}
           showTitle={true}

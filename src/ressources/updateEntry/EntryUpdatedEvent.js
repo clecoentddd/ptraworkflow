@@ -1,7 +1,8 @@
 // Event: EntryUpdatedEvent
 // Usage: emitted when an entry is updated
 
-export default function EntryUpdatedEvent({ entryId, changeId, newStartMonth, newEndMonth, userEmail, ressourceVersionId }) {
+export default function EntryUpdatedEvent({ entryId, changeId, startMonth, endMonth, userEmail, ressourceVersionId }) {
+  console.log('[EntryUpdatedEvent] called with:', { entryId, changeId, startMonth, endMonth, userEmail, ressourceVersionId });
   return {
     timestamp: new Date().toISOString(),
     event: 'EntryUpdated',
@@ -10,8 +11,8 @@ export default function EntryUpdatedEvent({ entryId, changeId, newStartMonth, ne
     ressourceVersionId,
     userEmail,
     payload: {
-      newStartMonth,
-      newEndMonth
+      startMonth,
+      endMonth
     }
   };
 }

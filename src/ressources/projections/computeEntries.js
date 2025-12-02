@@ -134,10 +134,38 @@ function computeEntries(startMonth, endMonth) {
 		}
 		if (e.event === 'EntryUpdated') {
 			console.log('[computeEntries] EntryUpdated:', e.entryId);
+			// Remove entry from all months
 			for (const month in byMonth) {
-				byMonth[month] = byMonth[month].map(ent =>
-					ent.entryId === e.entryId ? { ...ent, ...e.payload } : ent
-				);
+				byMonth[month] = byMonth[month].filter(ent => ent.entryId !== e.entryId);
+			}
+			// Find the original entry data from the last EntryAdded event
+			const originalEntry = [...eventLog].reverse().find(ev => ev.event === 'EntryAdded' && ev.entryId === e.entryId);
+			if (!originalEntry) {
+				console.log('[computeEntries] No original EntryAdded found for EntryUpdated:', e.entryId);
+				return;
+			}
+			const entryStart = e.payload?.startMonth;
+			const entryEnd = e.payload?.endMonth;
+			if (!entryStart || !entryEnd) {
+				console.log('[computeEntries] Skipping EntryUpdated with missing startMonth/endMonth:', e.entryId);
+				return;
+			}
+			// Merge all fields: original payload + updated payload
+			const mergedEntry = {
+				...originalEntry.payload,
+				...e.payload,
+				entryId: e.entryId,
+				changeId: e.changeId,
+				ressourceVersionId: e.ressourceVersionId
+			};
+			for (const month of monthRange(entryStart, entryEnd)) {
+				if (startMonth && endMonth && !isMonthInRange(month, startMonth, endMonth)) {
+					console.log('[computeEntries] Skipping month out of range for EntryUpdated:', month, 'entryId:', e.entryId);
+					continue;
+				}
+				if (!byMonth[month]) byMonth[month] = [];
+				byMonth[month].push(mergedEntry);
+				console.log('[computeEntries] Added updated entry to month:', month, 'entryId:', e.entryId);
 			}
 		}
 	}

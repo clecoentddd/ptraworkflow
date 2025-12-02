@@ -1,3 +1,35 @@
+/* Modern entryId input styling for UpdateEntryForm */
+.entryid-input {
+  padding: 8px 12px;
+  border: 1px solid #1976d2;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #f5faff;
+  color: #222;
+  margin-right: 12px;
+  transition: border-color 0.2s;
+}
+.entryid-input:focus {
+  border-color: #1565c0;
+  outline: none;
+  background: #e3f2fd;
+}
+/* Modern month picker styling for UpdateEntryForm */
+.month-picker {
+  padding: 8px 12px;
+  border: 1px solid #1976d2;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #f5faff;
+  color: #222;
+  margin-right: 12px;
+  transition: border-color 0.2s;
+}
+.month-picker:focus {
+  border-color: #1565c0;
+  outline: none;
+  background: #e3f2fd;
+}
 /* UpdateEntryForm specific styles */
 .update-entry-btn {
   background: #1976d2;

@@ -12,7 +12,7 @@ const ResourceProjectionViewer = ({
     {queryResult && (
       <div className="projection-popup">
         <button className="projection-close-btn" onClick={onQuery}>Fermer</button>
-        <strong>Projection (raw):</strong>
+        <strong>Projection (computeEntries)):</strong>
         <pre className="projection-raw-pre">
           {typeof queryResult === 'string' ? queryResult : JSON.stringify(queryResult, null, 2)}
         </pre>

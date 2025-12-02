@@ -3,6 +3,7 @@
 
 export default function UpdateEntryCommand(payload) {
   if (!payload.changeId) throw new Error('changeId is required');
+  if (!payload.ressourceVersionId) throw new Error('ressourceVersionId is required');
   if (!payload.entryId) throw new Error('entryId is required');
   return { type: 'UpdateEntryCommand', payload };
 }
