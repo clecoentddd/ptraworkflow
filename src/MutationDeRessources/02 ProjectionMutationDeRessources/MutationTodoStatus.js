@@ -1,25 +1,29 @@
 import React from 'react';
+import { getMutationProjection } from './projectionMutationDeRessources';
+import { readWorkflowEventLog } from '../../workflowEventLog';
+import './MutationTodoStatus.css';
 
 /**
- * Displays the todo status for a given changeId.
- * @param {Object} props
- * @param {string} props.changeId
- * @param {string} props.status
+ * Displays all mutation statuses from the projection.
  */
-export default function MutationTodoStatus({ changeId, status }) {
-  if (!changeId) return null;
+export default function MutationRessourcesTodoStatus() {
+  const eventLog = readWorkflowEventLog();
+  const { statusByChangeId } = getMutationProjection(eventLog);
+  console.log('[MutationRessourcesTodoStatus] statusByChangeId:', statusByChangeId);
   return (
-    <div style={{
-      background: '#fffbe6',
-      border: '2px solid #e11d48',
-      borderRadius: 8,
-      padding: '12px 18px',
-      margin: '12px 0',
-      fontWeight: 'bold',
-      color: '#e11d48',
-      fontSize: 16
-    }}>
-      <span>Mutation <b>{changeId}</b> : <span>{status}</span></span>
+    <div className="mutation-todo-status">
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Mutations en cours</div>
+      {Object.keys(statusByChangeId).length === 0 ? (
+        <span>Aucune mutation courante.</span>
+      ) : (
+        <ul style={{ paddingLeft: 18 }}>
+          {Object.entries(statusByChangeId).map(([changeId, status]) => (
+            <li key={changeId}>
+              Mutation <b>{changeId}</b> : <span>{status}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

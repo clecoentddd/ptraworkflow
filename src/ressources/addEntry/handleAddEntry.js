@@ -1,6 +1,9 @@
 // CommandHandler: handleAddEntry
 // Validates and emits EntryAdded event
 
+import { createEntryAddedEvent } from './EntryAddedEvent';
+import { appendWorkflowEvents } from '../../workflowEventLog';
+
 function isMonthBeforeOrEqual(a, b) {
 	// a, b: 'YYYY-MM'
 	const [ay, am] = a.split('-').map(Number);
@@ -9,6 +12,7 @@ function isMonthBeforeOrEqual(a, b) {
 }
 
 export default function handleAddEntry(events, command, userEmail) {
+	console.log('[handleAddEntry] called with:', { events, command, userEmail });
 	const { startMonth, endMonth, changeId, entryId } = command.payload;
 	if (!changeId) throw new Error('changeId is required');
 	if (!userEmail || userEmail === 'anonymous') {
@@ -27,13 +31,14 @@ export default function handleAddEntry(events, command, userEmail) {
 		return opened ? opened.ressourceVersionId : null;
 	})();
 	const { entryId: _eid, changeId: _cid, ...payloadRest } = command.payload;
-	return [{
-		timestamp: new Date().toISOString(),
-		event: 'EntryAdded',
+	const event = createEntryAddedEvent({
 		entryId,
 		changeId,
 		ressourceVersionId,
-		userEmail: userEmail,
+		userEmail,
 		payload: { ...payloadRest }
-	}];
+	});
+	console.log('[handleAddEntry] emitting event:', event);
+	appendWorkflowEvents([event]);
+	return [event];
 }

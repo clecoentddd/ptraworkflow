@@ -134,7 +134,7 @@ try {
     amount: "",
     startMonth: "",
     endMonth: "",
-    type: "",
+    type: "income",
   });
 
   function handleAdd() {
@@ -179,6 +179,7 @@ try {
     );
     const label = option ? option.label : "";
 
+    // Create the command first, then pass to handler
     const command = AddEntryCommand({
       entryId,
       code: form.code,
@@ -190,20 +191,42 @@ try {
       changeId,
     });
 
-    const userEmail = user?.email || user?.name || "anonymous";
+    const userEmail = user?.user?.email || user?.user?.name || "anonymous";
+    console.log('user:', user);
+    console.log('userEmail:', userEmail);
 
-    const newEvents = handleAddEntry(eventLog, command, userEmail);
-
-    // persist newEvents if needed — UI will re-render through eventLog read
-    alert("Entry added.");
+    try {
+      const newEvents = handleAddEntry(eventLog, command, userEmail);
+      alert("Entry added.");
+      // Re-read event log to update UI (if needed, use state or context)
+      window.location.reload();
+    } catch (err) {
+      if (err.message && err.message.includes("authenticate")) {
+        alert("Vous devez vous authentifier pour ajouter une entrée.");
+      } else {
+        alert("Erreur: " + err.message);
+      }
+    }
   }
 
 
   function handleDelete(entryId) {
+    console.log('[handleDelete] entryId:', entryId);
+    console.log('[handleDelete] eventLog:', eventLog);
+    // Create the command first, then pass to handler
     const command = DeleteEntryCommand({ entryId });
-    const userEmail = user?.email || "anonymous";
-    const newEvents = handleDeleteEntry(eventLog, command, userEmail);
-    alert("Entry removed.");
+    const userEmail = user?.user?.email || user?.user?.name || "anonymous";
+    try {
+      const newEvents = handleDeleteEntry(eventLog, command, userEmail);
+      alert("Entry removed.");
+      window.location.reload();
+    } catch (err) {
+      if (err.message && err.message.includes("authentifier")) {
+        alert("Vous devez vous authentifier pour supprimer une entrée.");
+      } else {
+        alert("Erreur: " + err.message);
+      }
+    }
   }
 
   // UPDATE ENTRY

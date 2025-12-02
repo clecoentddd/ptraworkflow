@@ -13,6 +13,11 @@ export function getMutationProjection(eventLog = readWorkflowEventLog()) {
   // Find all annulled mutations
   const annulledChangeIds = new Set(eventLog.filter(e => e.event === 'MutationDesRessourcesAnnulée').map(e => e.changeId));
 
+  // Debug logging
+  console.log('[getMutationProjection] mutationEvents:', mutationEvents);
+  console.log('[getMutationProjection] openedEvents:', openedEvents);
+  console.log('[getMutationProjection] annulledChangeIds:', Array.from(annulledChangeIds));
+
   // Build status per changeId, exclude annulled
   const statusByChangeId = {};
   mutationEvents.forEach(mutation => {
@@ -25,6 +30,8 @@ export function getMutationProjection(eventLog = readWorkflowEventLog()) {
       statusByChangeId[changeId] = 'Ressources à ouvrir';
     }
   });
+
+  console.log('[getMutationProjection] statusByChangeId:', statusByChangeId);
 
   return {
     statusByChangeId,

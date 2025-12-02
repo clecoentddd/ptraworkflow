@@ -1,0 +1,20 @@
+.mutation-todo-status {
+  background: #e3f2fd;
+  border: 1px solid #1976d2;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  font-weight: 500;
+  color: #1976d2;
+  font-size: 13px;
+}
+.mutation-todo-status ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.mutation-todo-status li {
+  margin-bottom: 2px;
+}
+.mutation-todo-status b {
+  color: #0d47a1;
+}

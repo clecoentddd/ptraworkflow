@@ -7,7 +7,8 @@ import { getMutationProjection, getOverallStatus } from '../sharedProjections/mu
 import MutationStatusSummary from '../sharedComponents/MutationStatusSummary/MutationStatusSummary';
 import '../MutationDeRessources.css';
 import { readWorkflowEventLog } from '../workflowEventLog';
-import MutationTodoStatus from './02 ProjectionMutationDeRessources/MutationTodoStatus';
+import MutationRessourcesTodoStatus from './02 ProjectionMutationDeRessources/MutationTodoStatus';
+import styles from './index.module.css';
 
 export default function MutationDeRessources() {
   const WORKFLOW_ID = 'ressource-mutation-workflow';
@@ -48,37 +49,33 @@ export default function MutationDeRessources() {
 
   // Get overall status for display
   const overallStatus = getOverallStatus(eventLog);
+  const { openMutationChangeId } = getMutationProjection(eventLog);
 
   return (
-    <div className="mutation-ressources-page">
-      <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'row', gap: '16px', marginBottom: 24 }}>
-        <h1 style={{ margin: 0 }}>Mutation de Ressources</h1>
+    <div className={styles['mutation-ressources-page']}>
+      <div className={styles['mutation-header']}>
+        <h1 className={styles['mutation-title']}>Mutation de Ressources</h1>
       </div>
-      <MutationStatusSummary overallStatus={overallStatus} eventLog={eventLog} />
-      {/* Add MutationTodoStatus component below the status summary */}
-      <MutationTodoStatus changeId={overallStatus?.latestDroitsPeriod?.changeId} status={overallStatus?.status} />
-      <div style={{ marginBottom: 16 }}>
-        <button
-          className="btn-start-mutation"
-          style={{
-            padding: '10px 22px',
-            background: '#43a047',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            fontWeight: 600,
-            fontSize: 17,
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(67, 160, 71, 0.15)'
-          }}
-          onClick={handleStartMutation}
-          disabled={mutationStarted}
-        >
-          {mutationStarted ? 'Mutation démarrée' : 'Créer une Mutation de Ressources'}
-        </button>
-        {mutationError && (
-          <span style={{ color: 'red', marginLeft: 12 }}>{mutationError}</span>
-        )}
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ flex: 1 }}>
+          <MutationStatusSummary overallStatus={overallStatus} eventLog={eventLog} className={styles['mutation-status-summary']} />
+          <div className={styles['mutation-status-summary']}>
+            <button
+              className={styles['btn-start-mutation']}
+              onClick={handleStartMutation}
+              disabled={mutationStarted}
+            >
+              {mutationStarted ? 'Mutation démarrée' : 'Créer une Mutation de Ressources'}
+            </button>
+            {mutationError && (
+              <span className={styles['mutation-error']}>{mutationError}</span>
+            )}
+          </div>
+        </div>
+        <div style={{ minWidth: 320, marginLeft: 32 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>Statut de la mutation courante</div>
+          <MutationRessourcesTodoStatus changeId={openMutationChangeId} />
+        </div>
       </div>
       {/* Show todo list for mutation de ressources */}
       {/* Removed: <TodoMutationRessourcesList events={eventLog} /> */}
